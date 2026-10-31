@@ -1,0 +1,26 @@
+{
+  "fetched_at": "2026-10-31T03:25:51.727549+00:00",
+  "channels": [],
+  "errors": [
+    {
+      "name": "Zentric Minecraft",
+      "source": "UCBoZcTLayAUgYTPsyrStiLg",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "name": "Klorna",
+      "source": "@Klorna1",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "name": "Jocuri Horror",
+      "source": "@JocuriHorrorSky",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "name": "Valeriu Coadă",
+      "source": "@valeriucoada",
+      "error": "channel id not found for @valeriucoada"
+    }
+  ]
+}
