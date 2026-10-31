@@ -16,7 +16,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run public RSS monitor
+      - name: Install public collector
+        run: python -m pip install --quiet yt-dlp
+
+      - name: Run public YouTube monitor
         run: python monitor.py
 
       - name: Commit snapshot

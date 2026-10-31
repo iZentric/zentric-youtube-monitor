@@ -1,26 +1,447 @@
 {
-  "fetched_at": "2026-10-31T03:25:51.727549+00:00",
-  "channels": [],
-  "errors": [
+  "fetched_at": "2026-10-31T03:26:26.833512+00:00",
+  "channels": [
     {
       "name": "Zentric Minecraft",
-      "source": "UCBoZcTLayAUgYTPsyrStiLg",
-      "error": "HTTP Error 404: Not Found"
+      "channel_id": "UCBoZcTLayAUgYTPsyrStiLg",
+      "channel_url": "https://www.youtube.com/channel/UCBoZcTLayAUgYTPsyrStiLg",
+      "latest": [
+        {
+          "video_id": "vctn6Jxk2c8",
+          "title": "FUGI! NOCIVANU l-a RĂPIT pe BEBE PIKACHU... (POKECITY)",
+          "published": null,
+          "duration": 947,
+          "url": "https://www.youtube.com/watch?v=vctn6Jxk2c8"
+        },
+        {
+          "video_id": "A_tsPVKuGaA",
+          "title": "POKECITY?! ?? Ep. 2 | CINE VA FI NOUL PRIMAR?",
+          "published": null,
+          "duration": 1440,
+          "url": "https://www.youtube.com/watch?v=A_tsPVKuGaA"
+        },
+        {
+          "video_id": "3x0DheW5lcI",
+          "title": "POKECITY?! ?? Ep. 1 | NOUL SMP CU POKEMONI alaturi de NOCIVANU'!",
+          "published": null,
+          "duration": 2153,
+          "url": "https://www.youtube.com/watch?v=3x0DheW5lcI"
+        },
+        {
+          "video_id": "efA0Tw-9rVU",
+          "title": "1 VS 2 LA LUCKY BLOCK RACE! AM DISTRUS TOTUL ??",
+          "published": null,
+          "duration": 1017,
+          "url": "https://www.youtube.com/watch?v=efA0Tw-9rVU"
+        },
+        {
+          "video_id": "xvI0qouI32A",
+          "title": "SuperCity AM CONSTRUIT CEA MAI SIGURA BAZA PE BEDROCK! ??",
+          "published": null,
+          "duration": 1254,
+          "url": "https://www.youtube.com/watch?v=xvI0qouI32A"
+        },
+        {
+          "video_id": "l8YWOqTS8Hg",
+          "title": "SuperCity ! SUNT PREA RAPID! AM FACUT COSTUMUL LUI FLASH",
+          "published": null,
+          "duration": 374,
+          "url": "https://www.youtube.com/watch?v=l8YWOqTS8Hg"
+        },
+        {
+          "video_id": "SZpEIgq4iVg",
+          "title": "AM GĂSIT FANTOMA LUI NOCIVANU PE SUPERCITY! 👻😱",
+          "published": null,
+          "duration": 757,
+          "url": "https://www.youtube.com/watch?v=SZpEIgq4iVg"
+        },
+        {
+          "video_id": "SCYPFmn-E8o",
+          "title": "AM GĂSIT TOT AURUL DIN SUPERCITY PENTRU COSTUMUL LUI MYSTERIO! ⛔️",
+          "published": null,
+          "duration": 1437,
+          "url": "https://www.youtube.com/watch?v=SCYPFmn-E8o"
+        },
+        {
+          "video_id": "KcSpWo1j-dE",
+          "title": "M-A PRINS MAFIA LUI NOCIV! Mi-a cerut TAXĂ sau mă mănâncă VENOM",
+          "published": null,
+          "duration": 499,
+          "url": "https://www.youtube.com/watch?v=KcSpWo1j-dE"
+        },
+        {
+          "video_id": "kgSoNWKmLpc",
+          "title": "NIMENI NU MA MAI POATE ATINGE CU ACEST COSTUM II!",
+          "published": null,
+          "duration": 1200,
+          "url": "https://www.youtube.com/watch?v=kgSoNWKmLpc"
+        },
+        {
+          "video_id": "oJMhaYI6I04",
+          "title": "AM JUCAT HIDE & SEEK PE SUPERCITY CU NOCIVANU!",
+          "published": null,
+          "duration": 886,
+          "url": "https://www.youtube.com/watch?v=oJMhaYI6I04"
+        },
+        {
+          "video_id": "fgMZn-1WNZI",
+          "title": "Nu o sa crezi ce am gasit in acest ORAS pe APA ABANDONAT !",
+          "published": null,
+          "duration": 2261,
+          "url": "https://www.youtube.com/watch?v=fgMZn-1WNZI"
+        },
+        {
+          "video_id": "c3N1aqZ1CXU",
+          "title": "AM  FOST TROLLAT DE CEL MAI BUN PRIETEN AL MEU! ARE *HACK* !",
+          "published": null,
+          "duration": 1419,
+          "url": "https://www.youtube.com/watch?v=c3N1aqZ1CXU"
+        },
+        {
+          "video_id": "BTWJYqGUXA0",
+          "title": "HIDE and SEEK dar ne-am transformat în ANIMALE în Minecraft! 😂🐷",
+          "published": null,
+          "duration": 1208,
+          "url": "https://www.youtube.com/watch?v=BTWJYqGUXA0"
+        }
+      ]
     },
     {
       "name": "Klorna",
-      "source": "@Klorna1",
-      "error": "HTTP Error 404: Not Found"
+      "channel_id": "UCGh69zTKqqo4vPIJOndt32w",
+      "channel_url": "https://www.youtube.com/channel/UCGh69zTKqqo4vPIJOndt32w",
+      "latest": [
+        {
+          "video_id": "vYSsnyRmF3Y",
+          "title": "The attack in Cherno..",
+          "published": null,
+          "duration": 6702,
+          "url": "https://www.youtube.com/watch?v=vYSsnyRmF3Y"
+        },
+        {
+          "video_id": "GIvziVhGLaI",
+          "title": "Drawing Competition..",
+          "published": null,
+          "duration": 1918,
+          "url": "https://www.youtube.com/watch?v=GIvziVhGLaI"
+        },
+        {
+          "video_id": "Ho3B07NZo58",
+          "title": "Take Care of the Cat..",
+          "published": null,
+          "duration": 1255,
+          "url": "https://www.youtube.com/watch?v=Ho3B07NZo58"
+        },
+        {
+          "video_id": "S2oo5HdsJ9A",
+          "title": "A game so messed up I had to eat a shawarma on stream",
+          "published": null,
+          "duration": 1393,
+          "url": "https://www.youtube.com/watch?v=S2oo5HdsJ9A"
+        },
+        {
+          "video_id": "Zdr8U04ARb4",
+          "title": "don't watch this video because it might be the most cracked game in the world",
+          "published": null,
+          "duration": 1536,
+          "url": "https://www.youtube.com/watch?v=Zdr8U04ARb4"
+        },
+        {
+          "video_id": "nmoR4nW20Ks",
+          "title": "Digging a Hole in the Ground..",
+          "published": null,
+          "duration": 1539,
+          "url": "https://www.youtube.com/watch?v=nmoR4nW20Ks"
+        },
+        {
+          "video_id": "cli653jY_7o",
+          "title": "Escape the TSUNAMI in GTA 5",
+          "published": null,
+          "duration": 1698,
+          "url": "https://www.youtube.com/watch?v=cli653jY_7o"
+        },
+        {
+          "video_id": "Dwk1RFSBxa8",
+          "title": "We're Taking Back the UN BASE in the Zombie Apocalypse..",
+          "published": null,
+          "duration": 5596,
+          "url": "https://www.youtube.com/watch?v=Dwk1RFSBxa8"
+        },
+        {
+          "video_id": "_xV4H5MmrZ8",
+          "title": "Drawing Contest..",
+          "published": null,
+          "duration": 1760,
+          "url": "https://www.youtube.com/watch?v=_xV4H5MmrZ8"
+        },
+        {
+          "video_id": "tdwiw7Ursss",
+          "title": "Want some fries?",
+          "published": null,
+          "duration": 2899,
+          "url": "https://www.youtube.com/watch?v=tdwiw7Ursss"
+        },
+        {
+          "video_id": "J6s_4dHb2bQ",
+          "title": "Downloading MODs in SKATE..",
+          "published": null,
+          "duration": 1092,
+          "url": "https://www.youtube.com/watch?v=J6s_4dHb2bQ"
+        },
+        {
+          "video_id": "j4M239gXHfw",
+          "title": "I have Fredbear's SPEED and SNIPER..",
+          "published": null,
+          "duration": 1032,
+          "url": "https://www.youtube.com/watch?v=j4M239gXHfw"
+        },
+        {
+          "video_id": "JV-DrPTIrSQ",
+          "title": "My cat is weird..",
+          "published": null,
+          "duration": 1621,
+          "url": "https://www.youtube.com/watch?v=JV-DrPTIrSQ"
+        },
+        {
+          "video_id": "JTNJBdj82hc",
+          "title": "I Am A HAMSTER In A Horror Game..",
+          "published": null,
+          "duration": 853,
+          "url": "https://www.youtube.com/watch?v=JTNJBdj82hc"
+        },
+        {
+          "video_id": "E7EGNFBcKOw",
+          "title": "I got a MOTORCYCLE in the Zombie Apocalypse..",
+          "published": null,
+          "duration": 4880,
+          "url": "https://www.youtube.com/watch?v=E7EGNFBcKOw"
+        }
+      ]
     },
     {
       "name": "Jocuri Horror",
-      "source": "@JocuriHorrorSky",
-      "error": "HTTP Error 404: Not Found"
+      "channel_id": "UC7Tmdxj18fdu4tTtxVUhoCA",
+      "channel_url": "https://www.youtube.com/channel/UC7Tmdxj18fdu4tTtxVUhoCA",
+      "latest": [
+        {
+          "video_id": "6m0mga7Om6s",
+          "title": "A fost ASCUNS in CASA si a iesit SEARA..",
+          "published": null,
+          "duration": 3323,
+          "url": "https://www.youtube.com/watch?v=6m0mga7Om6s"
+        },
+        {
+          "video_id": "zt3ouFbIEjY",
+          "title": "M-am JUCAT cu Cainele JERRY pe Roblox !",
+          "published": null,
+          "duration": 1861,
+          "url": "https://www.youtube.com/watch?v=zt3ouFbIEjY"
+        },
+        {
+          "video_id": "vbYPfW8hA7Y",
+          "title": "Noaptea 2 cu PISICA de pe Roblox..",
+          "published": null,
+          "duration": 1177,
+          "url": "https://www.youtube.com/watch?v=vbYPfW8hA7Y"
+        },
+        {
+          "video_id": "BwpDXiMZnoY",
+          "title": "CE s-a intamplat cu COPILUL din OHIO ?",
+          "published": null,
+          "duration": 1026,
+          "url": "https://www.youtube.com/watch?v=BwpDXiMZnoY"
+        },
+        {
+          "video_id": "PC3YH_T34DE",
+          "title": "NU este BINE Cainele MEU..",
+          "published": null,
+          "duration": 1327,
+          "url": "https://www.youtube.com/watch?v=PC3YH_T34DE"
+        },
+        {
+          "video_id": "4x3HIq2Kru0",
+          "title": "Ne ASCUNDEM in CASA din SPATE !",
+          "published": null,
+          "duration": 1687,
+          "url": "https://www.youtube.com/watch?v=4x3HIq2Kru0"
+        },
+        {
+          "video_id": "9c9AoDuRSAg",
+          "title": "A venit VAMPIR pe Animal HOSPITAL !",
+          "published": null,
+          "duration": 1349,
+          "url": "https://www.youtube.com/watch?v=9c9AoDuRSAg"
+        },
+        {
+          "video_id": "K9_M3AQJm5I",
+          "title": "TESTEZ 100 de LEGENDE pe Roblox",
+          "published": null,
+          "duration": 1217,
+          "url": "https://www.youtube.com/watch?v=K9_M3AQJm5I"
+        },
+        {
+          "video_id": "E1k8AWTrYZo",
+          "title": "Mi-a facut MANCARE Cainele ???",
+          "published": null,
+          "duration": 1242,
+          "url": "https://www.youtube.com/watch?v=E1k8AWTrYZo"
+        },
+        {
+          "video_id": "hkhYI0hp1mU",
+          "title": "Despre CE am VAZUT La FERMA..",
+          "published": null,
+          "duration": 914,
+          "url": "https://www.youtube.com/watch?v=hkhYI0hp1mU"
+        },
+        {
+          "video_id": "-mRfapYFyn4",
+          "title": "Fac VOCI doar cu FETE ! 👉👈",
+          "published": null,
+          "duration": 1553,
+          "url": "https://www.youtube.com/watch?v=-mRfapYFyn4"
+        },
+        {
+          "video_id": "VZ01eLx7lio",
+          "title": "CE s-a intamplat cu Cainele meu ?",
+          "published": null,
+          "duration": 1447,
+          "url": "https://www.youtube.com/watch?v=VZ01eLx7lio"
+        },
+        {
+          "video_id": "LIEMAb-ySdU",
+          "title": "Am SALVAT Casa de COPIL !",
+          "published": null,
+          "duration": 1942,
+          "url": "https://www.youtube.com/watch?v=LIEMAb-ySdU"
+        },
+        {
+          "video_id": "km_T7wYpPow",
+          "title": "A venit sa MĂ MĂNÂNCE",
+          "published": null,
+          "duration": 1710,
+          "url": "https://www.youtube.com/watch?v=km_T7wYpPow"
+        },
+        {
+          "video_id": "fUUniZ9Zsiw",
+          "title": "Salvez FETE de la MOARTE !",
+          "published": null,
+          "duration": 1104,
+          "url": "https://www.youtube.com/watch?v=fUUniZ9Zsiw"
+        }
+      ]
     },
     {
       "name": "Valeriu Coadă",
-      "source": "@valeriucoada",
-      "error": "channel id not found for @valeriucoada"
+      "channel_id": "UC_32_jCCgcliuN9V8st1P1Q",
+      "channel_url": "https://www.youtube.com/channel/UC_32_jCCgcliuN9V8st1P1Q",
+      "latest": [
+        {
+          "video_id": "AGu2A98YueQ",
+          "title": "Primul Meu ADMIN ABUSE pe STEAL AN EGG!",
+          "published": null,
+          "duration": 1295,
+          "url": "https://www.youtube.com/watch?v=AGu2A98YueQ"
+        },
+        {
+          "video_id": "78oFdylHqMw",
+          "title": "Cele Mai Tari Shorts cu *99 NOPȚI ÎN PĂDURE*!!",
+          "published": null,
+          "duration": 783,
+          "url": "https://www.youtube.com/watch?v=78oFdylHqMw"
+        },
+        {
+          "video_id": "3P8cIQzk4QA",
+          "title": "Am Cheltuit 10.000 Robuxi pe STEAL AN EGG!",
+          "published": null,
+          "duration": 1568,
+          "url": "https://www.youtube.com/watch?v=3P8cIQzk4QA"
+        },
+        {
+          "video_id": "Jr2j6pGdfK8",
+          "title": "Mănânc TOATE Produsele din *99 NOPȚI* în Viața Reală: Filmul!",
+          "published": null,
+          "duration": 4585,
+          "url": "https://www.youtube.com/watch?v=Jr2j6pGdfK8"
+        },
+        {
+          "video_id": "1-33NpHzYfk",
+          "title": "Evadez din Școală în 24 de Ore! 😱",
+          "published": null,
+          "duration": 2809,
+          "url": "https://www.youtube.com/watch?v=1-33NpHzYfk"
+        },
+        {
+          "video_id": "NNghjJHGtJE",
+          "title": "Cele Mai Tari Videoclipuri Din Această VARĂ!! *2026*",
+          "published": null,
+          "duration": 1122,
+          "url": "https://www.youtube.com/watch?v=NNghjJHGtJE"
+        },
+        {
+          "video_id": "py2q5ykEo58",
+          "title": "Testez Mituri HORROR din Roblox! 😱 *tremur de frică*",
+          "published": null,
+          "duration": 1936,
+          "url": "https://www.youtube.com/watch?v=py2q5ykEo58"
+        },
+        {
+          "video_id": "RMndafCfOYM",
+          "title": "VERITY ÎN... ROBLOX?!",
+          "published": null,
+          "duration": 1138,
+          "url": "https://www.youtube.com/watch?v=RMndafCfOYM"
+        },
+        {
+          "video_id": "gi137YE_d4k",
+          "title": "DACĂ RÂZI, AI PIERDUT! #2 (EXTREM)",
+          "published": null,
+          "duration": 1044,
+          "url": "https://www.youtube.com/watch?v=gi137YE_d4k"
+        },
+        {
+          "video_id": "vLKBr2Hu1EM",
+          "title": "Am Creat Membrii ORANGE BLUE în ROBLOX!! 😂 (cu Eugen, Ady, Silviu, Andreea)",
+          "published": null,
+          "duration": 1338,
+          "url": "https://www.youtube.com/watch?v=vLKBr2Hu1EM"
+        },
+        {
+          "video_id": "gF4ojSfbAl4",
+          "title": "Sunt o Asistentă Obraznică 24 ORE! *mă dezbrac?!*😱",
+          "published": null,
+          "duration": 1741,
+          "url": "https://www.youtube.com/watch?v=gF4ojSfbAl4"
+        },
+        {
+          "video_id": "qa7M1fHbxyw",
+          "title": "ANDREEA BOSTANICA M-A ÎNȘELAT CU SNIK!!",
+          "published": null,
+          "duration": 1226,
+          "url": "https://www.youtube.com/watch?v=qa7M1fHbxyw"
+        },
+        {
+          "video_id": "z9mrz3r_C5Q",
+          "title": "CEI MAI NOROCOȘI OAMENI DIN LUME!! *Partea 4",
+          "published": null,
+          "duration": 791,
+          "url": "https://www.youtube.com/watch?v=z9mrz3r_C5Q"
+        },
+        {
+          "video_id": "7DmVXctECgI",
+          "title": "Reacționez la BĂTAIA dintre ANDREEA BOSTANICA și IULIANA BEREGOI!",
+          "published": null,
+          "duration": 1351,
+          "url": "https://www.youtube.com/watch?v=7DmVXctECgI"
+        },
+        {
+          "video_id": "5J8gfepOl4c",
+          "title": "VALERIU vs MIHA în Roblox RIVALS! Cine câștigă?! 😱",
+          "published": null,
+          "duration": 1230,
+          "url": "https://www.youtube.com/watch?v=5J8gfepOl4c"
+        }
+      ]
     }
-  ]
+  ],
+  "errors": []
 }
