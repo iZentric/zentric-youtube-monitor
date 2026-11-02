@@ -1,0 +1,137 @@
+{
+  "Version": 3,
+  "Parameters": [
+    {
+      "Id": "ParamAngleX",
+      "GroupId": "ParamGroupParamAngleX",
+      "Name": "ParamAngleX"
+    },
+    {
+      "Id": "ParamAngleY",
+      "GroupId": "ParamGroupParamAngleY",
+      "Name": "ParamAngleY"
+    },
+    {
+      "Id": "ParamAngleZ",
+      "GroupId": "ParamGroupParamAngleZ",
+      "Name": "ParamAngleZ"
+    },
+    {
+      "Id": "ParamEyeLOpen",
+      "GroupId": "ParamGroupParamEyeLOpen",
+      "Name": "ParamEyeLOpen"
+    },
+    {
+      "Id": "ParamEyeROpen",
+      "GroupId": "ParamGroupParamEyeROpen",
+      "Name": "ParamEyeROpen"
+    },
+    {
+      "Id": "ParamEyeBallX",
+      "GroupId": "ParamGroupParamEyeBallX",
+      "Name": "ParamEyeBallX"
+    },
+    {
+      "Id": "ParamEyeBallY",
+      "GroupId": "ParamGroupParamEyeBallY",
+      "Name": "ParamEyeBallY"
+    },
+    {
+      "Id": "ParamMouthOpenY",
+      "GroupId": "ParamGroupParamMouthOpenY",
+      "Name": "ParamMouthOpenY"
+    },
+    {
+      "Id": "ParamMouthForm",
+      "GroupId": "ParamGroupParamMouthForm",
+      "Name": "ParamMouthForm"
+    },
+    {
+      "Id": "ParamBrowLY",
+      "GroupId": "ParamGroupParamBrowLY",
+      "Name": "ParamBrowLY"
+    },
+    {
+      "Id": "ParamBrowRY",
+      "GroupId": "ParamGroupParamBrowRY",
+      "Name": "ParamBrowRY"
+    },
+    {
+      "Id": "ParamBodyAngleX",
+      "GroupId": "ParamGroupParamBodyAngleX",
+      "Name": "ParamBodyAngleX"
+    },
+    {
+      "Id": "ParamBodyAngleZ",
+      "GroupId": "ParamGroupParamBodyAngleZ",
+      "Name": "ParamBodyAngleZ"
+    },
+    {
+      "Id": "ParamBreath",
+      "GroupId": "ParamGroupParamBreath",
+      "Name": "ParamBreath"
+    }
+  ],
+  "ParameterGroups": [
+    {
+      "Id": "ParamGroupParamAngleX",
+      "GroupId": "",
+      "Name": "Cap: rotire stânga-dreapta"
+    },
+    {
+      "Id": "ParamGroupParamAngleY",
+      "GroupId": "",
+      "Name": "Cap: sus-jos"
+    },
+    {
+      "Id": "ParamGroupParamAngleZ",
+      "GroupId": "",
+      "Name": "Cap: înclinare"
+    },
+    {
+      "Id": "ParamGroupParamEyeLOpen",
+      "GroupId": "",
+      "Name": "Ochi stâng: deschis"
+    },
+    {
+      "Id": "ParamGroupParamEyeROpen",
+      "GroupId": "",
+      "Name": "Ochi drept: deschis"
+    },
+    {
+      "Id": "ParamGroupParamEyeBallX",
+      "GroupId": "",
+      "Name": "Privire: stânga-dreapta"
+    },
+    {
+      "Id": "ParamGroupParamEyeBallY",
+      "GroupId": "",
+      "Name": "Privire: sus-jos"
+    },
+    {
+      "Id": "ParamGroupParamMouthOpenY",
+      "GroupId": "",
+      "Name": "Gură: deschisă"
+    },
+    {
+      "Id": "ParamGroupParamMouthForm",
+      "GroupId": "",
+      "Name": "Gură: formă"
+    },
+    {
+      "Id": "ParamGroupParamBodyAngleX",
+      "GroupId": "",
+      "Name": "Corp: rotire"
+    },
+    {
+      "Id": "ParamGroupParamBodyAngleZ",
+      "GroupId": "",
+      "Name": "Corp: înclinare"
+    },
+    {
+      "Id": "ParamGroupParamBreath",
+      "GroupId": "",
+      "Name": "Respirație"
+    }
+  ]
+}
