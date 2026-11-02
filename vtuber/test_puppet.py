@@ -111,3 +111,22 @@ def test_frames_are_scaled_to_the_configured_height():
     assert short.eye_mask.size == short.base.size
     tall = Puppet(ASSETS, output_height=900, motion={})
     assert tall.frame(0.0).height == 900
+
+
+def test_mouth_has_three_distinct_levels():
+    """închis → pe jumătate → larg, fără fantomă: fiecare treaptă diferă de celelalte."""
+    puppet = make()
+    closed = puppet.compose(0.0, 0.0)
+    half = puppet.compose(0.6, 0.0)
+    wide = puppet.compose(1.0, 0.0)
+    mouth_box = puppet.mouth_mask.getbbox()
+    for first, second in ((closed, half), (half, wide), (closed, wide)):
+        box = changed_box(first, second)
+        assert box is not None
+        assert inside(box, mouth_box)
+
+
+def test_half_mouth_is_derived_not_copied():
+    puppet = make()
+    assert changed_box(puppet.mouth_mid, puppet.base) is not None
+    assert changed_box(puppet.mouth_mid, puppet.mouth_open) is not None

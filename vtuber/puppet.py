@@ -99,6 +99,7 @@ class Puppet:
         self.mouth_open = self._fit(self.mouth_open)
         self.eye_mask = self.eye_mask.resize(self.base.size, Image.BILINEAR)
         self.mouth_mask = self.mouth_mask.resize(self.base.size, Image.BILINEAR)
+        self.mouth_mid = self._derive_half_mouth()
 
         self._scaled: dict[str, Image.Image] = {}
         self.current = "idle.png"
@@ -143,6 +144,23 @@ class Puppet:
 
     # ---------- randare ----------
 
+    def _derive_half_mouth(self) -> Image.Image:
+        """Gura „pe jumătate”: gura deschisă comprimată vertical la 72%, lipită pe buza de sus.
+
+        Desenul are doar două poziții ale gurii; comprimarea dă a treia, suficient de bună
+        ca lip-sync-ul să nu mai clipească între închis și larg.
+        """
+        box = self.mouth_mask.getbbox()
+        if box is None:
+            return self.base.copy()
+        width, height = box[2] - box[0], box[3] - box[1]
+        squashed_height = max(4, int(height * 0.72))
+        patch = self.mouth_open.crop(box).resize((width, squashed_height), Image.LANCZOS)
+        mask = self.mouth_mask.crop(box).resize((width, squashed_height), Image.BILINEAR)
+        frame = self.base.copy()
+        frame.paste(patch, (box[0], box[1]), mask)
+        return frame
+
     def _fit(self, image: Image.Image) -> Image.Image:
         if image.height == self.height:
             return image
@@ -172,8 +190,12 @@ class Puppet:
     def compose(self, mouth: float, eyes_closed: float, pose: tuple[float, float] = (0.0, 0.0)) -> Image.Image:
         """Cadrul: bază `idle` + gura deschisă + pleoapele închise (+ legănare)."""
         frame = self.base.copy()
-        if mouth > 0.5:
-            frame.paste(self.mouth_open, (0, 0), self._mask("mouth", (mouth - 0.5) / 0.1))
+        half = (mouth - 0.5) / 0.06
+        if half > 0:
+            frame.paste(self.mouth_mid, (0, 0), self._mask("mouth", half))
+        wide = (mouth - 0.8) / 0.06
+        if wide > 0:
+            frame.paste(self.mouth_open, (0, 0), self._mask("mouth", wide))
         if eyes_closed > 0.5:
             frame.paste(self.eyes_closed, (0, 0), self._mask("eyes", (eyes_closed - 0.5) / 0.25))
         return self._sway(frame, pose)

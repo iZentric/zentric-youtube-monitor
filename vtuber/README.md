@@ -10,6 +10,7 @@ Ce e aici:
 | `states.izentric.json` | stările, pragurile, timpii de reacție, animația de balans |
 | `facesource.py` | citirea expresiilor din cameră (MediaPipe → `jawOpen`, `mouthSmile`, `browInnerUp`) |
 | `ASSETS.md` | ce am măsurat în pozele tale și ce lipsește ca să devină model Live2D |
+| `ART-BRIEF.md` | ce poze noi trebuie desenate, în ce ordine, cu specificații exacte |
 | `README.md` | pornire, OBS, reacții, checklist |
 | `vts.py` | conexiunea + autentificarea la API-ul VTube Studio (folosită de ambele scripturi) |
 | `face_reactions.py` | pornește expresii când faci anumite fețe (zâmbet, surprindere, cu ochiul, cap înclinat) |
@@ -58,7 +59,7 @@ python vtuber/pngtuber.py --mic --face --puppet
 
 Pozele tale conțin, fără să fi fost gândite așa, trei straturi: `idle` e baza, `blink` diferă de ea **doar în zona ochilor** (3,7% din cadru), iar `talking` **doar în zona gurii** (1,5%). `puppet.py` extrage diferențele ca măști cu margini estompate și le compune peste bază, deci:
 
-- gura se deschide și se închide cu vocea (nivel RMS SAU `jawOpen`), nu comută imagini întregi;
+- gura se deschide pe trei trepte (închis / pe jumătate / larg) cu vocea (nivel RMS SAU `jawOpen`) — treapta de mijloc e derivată din gura deschisă, comprimată vertical la 72%, deci nu are nevoie de un desen nou;
 - pleoapele coboară pe `eyeBlink` din cameră, independent de poziția gurii — poți clipi cu gura deschisă fără o poză dedicată;
 - capul se înclină ±3° după poziția feței în cameră, în timp ce corpul stă pe loc (`swayDegrees` în config);
 - reacțiile (`laugh`, `shocked`, `sad`, `sus`, `love`) rămân imagini întregi — sunt desene separate, nu se pot descompune.
