@@ -68,6 +68,13 @@ def vts_server(values: list[dict]):
         server.shutdown()
 
 
+def test_resolve_accepts_vts_path_or_bare_file_name():
+    available = {"expressions/exp_02.exp3.json": "exp_02"}
+    assert face_reactions.resolve("expressions/exp_02.exp3.json", available) == "expressions/exp_02.exp3.json"
+    assert face_reactions.resolve("exp_02.exp3.json", available) == "expressions/exp_02.exp3.json"
+    assert face_reactions.resolve("lipsa.exp3.json", available) is None
+
+
 def test_matches_checks_all_bounds():
     rule = {"MouthOpen": {"min": 0.6}, "Brows": {"max": 0.4}}
     assert face_reactions.matches(rule, {"MouthOpen": 0.7, "Brows": 0.1})

@@ -1,4 +1,4 @@
-vtuber/model/
+vtuber/models/
 vtuber/token.json
 vtuber/state.json
 __pycache__/

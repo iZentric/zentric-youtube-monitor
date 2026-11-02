@@ -31,6 +31,17 @@ def available_expressions(ws) -> dict:
     return {expression["file"]: expression["name"] for expression in data.get("expressions", [])}
 
 
+def resolve(expression_file: str, available: dict) -> str | None:
+    """Găsește numele exact folosit de VTS; acceptă și doar numele fișierului."""
+    if expression_file in available:
+        return expression_file
+    wanted = Path(expression_file).name
+    for file in available:
+        if Path(file).name == wanted:
+            return file
+    return None
+
+
 def matches(when: dict, values: dict) -> bool:
     for name, bounds in when.items():
         value = values.get(name)
@@ -90,8 +101,9 @@ def main() -> int:
                 return 0
             usable = []
             for rule in rules:
-                if rule["expressionFile"] in expressions:
-                    usable.append(rule)
+                resolved = resolve(rule["expressionFile"], expressions)
+                if resolved:
+                    usable.append({**rule, "expressionFile": resolved})
                 else:
                     print(f"! {rule['name']}: modelul nu are {rule['expressionFile']} — rulez --list și corectez reactions.json")
             if not usable:

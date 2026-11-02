@@ -2,31 +2,31 @@
   "rules": [
     {
       "name": "happy",
-      "expressionFile": "happy.exp3.json",
+      "expressionFile": "exp_02.exp3.json",
       "when": {"MouthSmile": {"min": 0.5}},
       "holdSeconds": 1.2,
       "cooldownSeconds": 3
     },
     {
       "name": "surprised",
-      "expressionFile": "surprised.exp3.json",
+      "expressionFile": "exp_04.exp3.json",
       "when": {"MouthOpen": {"min": 0.6}, "Brows": {"min": 0.4}},
       "holdSeconds": 1.0,
       "cooldownSeconds": 3
     },
     {
-      "name": "wink",
-      "expressionFile": "wink.exp3.json",
+      "name": "angry",
+      "expressionFile": "exp_05.exp3.json",
+      "when": {"Brows": {"max": -0.4}},
+      "holdSeconds": 1.0,
+      "cooldownSeconds": 8
+    },
+    {
+      "name": "smug",
+      "expressionFile": "exp_08.exp3.json",
       "when": {"EyeOpenLeft": {"max": 0.2}, "EyeOpenRight": {"min": 0.4}},
       "holdSeconds": 0.8,
       "cooldownSeconds": 5
-    },
-    {
-      "name": "tilt",
-      "expressionFile": "tilt.exp3.json",
-      "when": {"FaceAngleZ": {"min": 15}},
-      "holdSeconds": 1.0,
-      "cooldownSeconds": 6
     }
   ]
 }

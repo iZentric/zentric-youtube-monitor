@@ -9,8 +9,9 @@ Ce e aici:
 | `face_reactions.py` | pornește expresii când faci anumite fețe (zâmbet, surprindere, cu ochiul, cap înclinat) |
 | `reactions.json` | regulile „față → expresie” |
 | `vts_bridge.py` | pornește o animație în VTube Studio când monitorul vede un clip nou |
-| `test_vts_bridge.py`, `test_face_reactions.py` | 11 teste, rulate pe un server VTube Studio fals |
-| `model/` | pui aici `Pachan_1.1` dezarhivat (ignorat de git) |
+| `model_tool.py` | inspectează un model Live2D și îl instalează în folderul VTube Studio |
+| `test_vts_bridge.py`, `test_face_reactions.py`, `test_model_tool.py` | 19 teste, rulate pe un server VTube Studio fals și pe modele de test |
+| `models/` | modelele descărcate local (ignorat de git) |
 
 ## 1. Verdict: ce model ai (confirmat)
 
@@ -36,14 +37,39 @@ Dacă mai târziu schimbi modelul: `*.moc3` + `*.model3.json` → 2D Live2D → 
 
 Concluzia: pentru un model Live2D, VTube Studio nu e „o variantă”, e singura variantă serioasă. Alternativele devin relevante doar dacă treci pe model 3D.
 
+### Modele gratuite bune și legale (instalate de `model_tool.py`)
+
+Modelele oficiale Live2D (repo `Live2D/CubismWebSamples`) sunt complete: moc3 + texturi + physics + expresii + motion-uri. Cele folosibile comercial pentru un canal mic:
+
+| model | expresii | ce e | licență |
+| --- | --- | --- | --- |
+| **Mao Niziiro** (`Mao`, 4,2 MB) | 8 (zâmbet, ochi scânteietori, supărat, blush, smug) | jumătate de corp, physics, 8 motion-uri | **Live2D Original Character** → uz comercial permis persoanelor fizice / firmelor mici + text de credit |
+| `Haru`, `Hiyori`, `Mark`, `Ren`, `Rice`, `Wanko` | 8 / 0 / 0 / … | tot personaje Live2D originale | la fel ca Mao; Hiyori nu permite modificarea designului |
+| `Natori` | 11, cu nume clare (`Smile`, `Surprised`, `Angry`, `Sad`) | cel mai expresiv | **Collaboration Character → NU se folosește comercial** |
+
+Instalare (descarcă din repo-ul oficial, validează fișierele, copiază în folderul VTube Studio):
+
+```
+python vtuber/model_tool.py install --github Mao
+python vtuber/model_tool.py inspect vtuber/models/Mao      # ce expresii are, ce parametri atinge fiecare
+python vtuber/model_tool.py install C:\Downloads\Model --target "C:\...\Live2DModels"
+```
+
+Pe Windows `--target` se poate omite: scriptul caută singur folderul `Live2DModels` din `AppData\LocalLow\DenchiSoft\VTubeStudio`. Marca de copyright obligatorie la utilizarea personajelor Live2D originale, în descrierea video:
+
+> This content uses sample data owned and copyrighted by Live2D Inc. The sample data are utilized in accordance with terms and conditions set by Live2D Inc. This content itself is created at the author's sole discretion.
+
+Modelul Pachan rămâne o opțiune (e frumos și e deja la tine), dar licența lui e „personal use” — pentru monetizare, Mao/Haru sunt varianta curată până îți comanzi un model propriu.
+
 ## 2. VTube Studio + webcam (calea pentru model 2D)
 
 1. Steam → VTube Studio (gratuit; watermark-ul dispare cu DLC plătit).
 2. Încarcă modelul → `Settings` → **API**: pornește serverul de plugin-uri (port implicit **8001**) și permite plugin-urile. Fără asta, bridge-ul de la punctul 4 nu se poate conecta.
 3. Webcam, în ordinea importanței: lumină difuză în față, fără fereastră/bec în spate, cameră la nivelul ochilor, 50–80 cm, 30 fps. Închide Zoom/Teams/Discord video înainte — fură camera.
-4. Calibrează pe față neutră, pune smoothing cât să nu tremure, apoi fă-ți 3–5 hotkeys/expresii pentru reacții (râs, surprins, ridicat sprâncene). Notează numele exact al hotkey-urilor din fereastra `Hotkeys` — Pachan are setul lui, iar același nume intră în `VTS_HOTKEY` la punctul 4.
+4. **Trackerul face diferența la nivel de față.** Butonul **Tracking Quality** → alege **„[Google] Mediapipe Tracker”** (Windows, fără GPU special): prinde sprâncenele separat, gura și ochii mai bine decât trackerul implicit (OpenSeeFace), plus hand tracking. Alternativă: trackerul NVIDIA (dacă ai placă NVIDIA). După prima pornire calibrează o dată pe față neutră, cu privirea în cameră.
+5. Pune smoothing cât să nu tremure și verifică pe rând fiecare expresie cu `face_reactions.py`.
 
-Calitatea tracking-ului, după producător: **iPhone > webcam > Android**.
+Calitatea tracking-ului, după producător: **iPhone (ARKit) > webcam cu Mediapipe/NVIDIA > webcam implicit > Android**. Dacă vrei saltul „ca la VTuberii mari”, singura investiție care contează e un iPhone folosit ca tracker — restul îl avem deja.
 
 ## 3. OBS: avatar cu fundal transparent
 
@@ -75,7 +101,7 @@ python vtuber/face_reactions.py --list     # ce expresii (.exp3.json) are modelu
 python vtuber/face_reactions.py            # pornește motorul; Ctrl+C îl oprește
 ```
 
-Pași: rulezi `--list`, iei numele fișierelor de expresie din model, le pui în `vtuber/reactions.json`, rulezi din nou. Regulile care nu găsesc fișierul în model sunt sărite cu un avertisment, nu crapă.
+`reactions.json` e calibrabil pentru **Mao**: zâmbet → `exp_02` (ochi închiși de zâmbet), gură deschisă + sprâncene sus → `exp_04` (scânteie), sprâncene încruntate → `exp_05` (supărat), cu ochiul → `exp_08` (smug). Pentru alt model: rulezi `--list`, iei numele fișierelor de expresie, le pui în `vtuber/reactions.json`, rulezi din nou. Regulile care nu găsesc fișierul în model sunt sărite cu un avertisment, nu crapă.
 
 O regulă arată așa:
 
@@ -116,7 +142,8 @@ Calibrare: pornește cu praguri la 0,5 și ajustează după 2 minute de teste �
 - Conținutul arhivelor (rar/7z) nu poate fi deschis din sandbox — Drive îmi dă doar metadate, iar descărcarea binară nu trece prin sandbox. Verdictul din secțiunea 1 vine din pagina BOOTH a modelului și din dimensiunile fișierelor.
 - `mini.7z` = veadotube mini rămâne [presupus] (nume + 122,7 MB vs ~106 MB build-ul oficial).
 - Ce expressions/hotkeys are exact Pachan 1.1 se vede abia la prima încărcare în VTS.
-- Ambele scripturi sunt testate pe un server VTS fals, nu pe VTube Studio real (aici nu rulează Windows/OBS/webcam). Prima rulare reală o confirmi tu.
+- Scripturile sunt testate pe un server VTS fals, nu pe VTube Studio real (aici nu rulează Windows/OBS/webcam). Instalarea de model e testată real, dar într-un folder temporar, nu în VTS. Prima rulare reală o confirmi tu.
+- Trackerul Mediapipe/NVIDIA nu poate fi testat aici (fără cameră); recomandarea vine din documentația VTS.
 - Pragurile din `reactions.json` (0,5 / 0,6 / 0,2 / 15°) sunt valori de start, nu calibrate pe fața ta — se ajustează în 2 minute de teste.
 - Numele fișierelor de expresie din `reactions.json` sunt exemple: modelul Pachan are propriile `.exp3.json`, le vezi cu `--list`.
 - Tracking pe iPhone/Android nu e acoperit; e opțiunea următoare dacă webcam-ul nu e suficient.
