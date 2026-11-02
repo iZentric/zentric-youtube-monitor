@@ -15,8 +15,8 @@
     "iris_R",
     "eye_mask_L",
     "eye_mask_R",
-    "head",
-    "body"
+    "body",
+    "head"
   ],
   "clipping": {
     "iris_L": "eye_mask_L",

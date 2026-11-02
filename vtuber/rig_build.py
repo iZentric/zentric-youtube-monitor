@@ -26,9 +26,16 @@ ASSETS = HERE / "assets"
 OUT = HERE / "rig"
 
 CUT_Y = 655          # linia gulerului, măsurată pe idle.png
-HEAD_BLEED = 20      # cât coboară capul peste guler, ca să nu apară gol la rotire
+HEAD_BLEED = 60      # cât coboară gâtul sub linia gulerului (gâtul se termină la ~y 700)
 BODY_BLEED = 20      # cât urcă trupul sub cap
 IRIS_FEATHER = 0  # margine tare: whitening-ul din cap acoperă exact discul, deci reconstrucția e la pixel
+
+
+def skin_mask(image: Image.Image) -> np.ndarray:
+    """Pielea personajului (tenul): R-G ≈ 64, G-B ≈ 32. Doar gâtul pică sub linia gulerului."""
+    rgb = np.asarray(image.convert("RGBA")).astype(int)
+    red, green, blue = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    return (np.abs((red - green) - 64) < 32) & (np.abs((green - blue) - 32) < 32) & (red > 170) & (rgb[..., 3] > 200)
 
 
 def _load(name: str, assets: Path = ASSETS) -> Image.Image:
@@ -135,11 +142,24 @@ def build_layers(
         no_iris = pixels.copy()
     head_source = Image.fromarray(no_iris, "RGBA")
 
-    head = Image.new("RGBA", source.size, (0, 0, 0, 0))
-    head.paste(head_source.crop((0, 0, width, CUT_Y + HEAD_BLEED)), (0, 0))
+    # capul: tot ce e deasupra gulerului + gâtul (doar pielea) din banda de sub el.
+    # Gulerul rămâne la trup, deci la rotire capul ia gâtul cu el și gulerul stă pe loc.
+    skin = skin_mask(source)
+    head_pixels = np.zeros_like(pixels)
+    head_pixels[:CUT_Y] = pixels[:CUT_Y]
+    band = slice(CUT_Y, min(height, CUT_Y + HEAD_BLEED))
+    # gâtul se lățește cu 6 px în banda de sub guler: gulerul îl acoperă, dar la rotire
+    # nu mai rămâne nici un gol între gât și guler
+    wider = Image.fromarray((skin[band] * 255).astype(np.uint8), "L").filter(ImageFilter.MaxFilter(13))
+    keep = np.asarray(wider) > 40
+    head_pixels[band] = np.where(keep[..., None], pixels[band], 0)
+    head = Image.fromarray(head_pixels, "RGBA")
 
-    body = Image.new("RGBA", source.size, (0, 0, 0, 0))
-    body.paste(source.crop((0, CUT_Y - BODY_BLEED, width, height)), (0, CUT_Y - BODY_BLEED))
+    # trupul: tot ce e sub guler, fără piele — altfel gâtul ar sta pe loc când capul se rotește
+    body_pixels = np.zeros_like(pixels)
+    start = CUT_Y - BODY_BLEED
+    body_pixels[start:] = np.where((~skin[start:])[..., None], pixels[start:], 0)
+    body = Image.fromarray(body_pixels, "RGBA")
 
     eye_masks = eye_mask_masks(source.size, circles)
     layers: dict[str, Image.Image] = {"head": head, "body": body}
@@ -176,20 +196,22 @@ def _patch(state: Image.Image, mask: Image.Image) -> Image.Image:
 
 def composite(layers: dict[str, Image.Image], order: list[str] | None = None) -> Image.Image:
     """Reconstruiește cadrul din straturi, în ordinea dată."""
-    order = order or ["head", "body", "iris_L", "iris_R"]
+    order = order or COMPOSITE_ORDER
     frame = Image.new("RGBA", layers[order[0]].size, (0, 0, 0, 0))
     for name in order:
         frame.alpha_composite(layers[name])
     return frame
 
 
-DRAW_ORDER = ["eyes_closed", "mouth_open", "iris_L", "iris_R", "eye_mask_L", "eye_mask_R", "head", "body"]
+# gulerul (trup) stă DEASUPRA gâtului, deci cusătura nu se vede când capul se rotește
+DRAW_ORDER = ["eyes_closed", "mouth_open", "iris_L", "iris_R", "eye_mask_L", "eye_mask_R", "body", "head"]
+COMPOSITE_ORDER = ["body", "head", "iris_L", "iris_R"]
 
 GROUPS = [
     ("FACE", True, ["eyes_closed", "mouth_open", "iris_L", "iris_R"]),
     ("MASKS", False, ["eye_mask_L", "eye_mask_R"]),
-    ("HEAD", True, ["head"]),
     ("BODY", True, ["body"]),
+    ("HEAD", True, ["head"]),
 ]
 HIDDEN_BY_DEFAULT = {"eyes_closed", "mouth_open"}
 CLIPPING = {"iris_L": "eye_mask_L", "iris_R": "eye_mask_R"}

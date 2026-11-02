@@ -20,26 +20,31 @@ De ce contează: VTube Studio nu ghicește nimic. Dacă grupul `EyeBlink` nu con
 | `izentric.model3.json` | conform schemei Mao, cu `Groups` EyeBlink + LipSync și `HitAreas` Head + Body |
 | `izentric.cdi3.json` | 16 parametri cu ID-urile standard și grupele standard |
 | `izentric.rigspec.json` | **specificația de rig**: arborele de deformatoare, keyform-urile în pixeli, clippingul |
-| `head.png`, `body.png` | tăiate la guler (y=655), cu 20 px de suprapunere |
+| `head.png`, `body.png` | tăiate la guler (y=655); **gâtul e în cap, gulerul în trup**, iar gulerul se desenează deasupra — la rotire capul ia gâtul cu el și nu se vede cusătură |
 | `iris_L.png`, `iris_R.png` | discuri de rază 52 la (410,427) și (607,424), măsurate pe poza ta |
 | `eye_mask_L.png`, `eye_mask_R.png` | elipsele de clipping pentru irise (1,55× / 1,45× raza irisului) |
 | `eyes_closed.png`, `mouth_open.png` | pleoapele și gura, extrase din `blink` / `talking` |
 
-Verificat automat: `body` + `head` + cele două irise recompuse dau `idle.png` cu **RMS 0,17** — adică poza ta, tăiată corect, fără nimic redesemnat.
+Verificat automat: `body` + `head` + cele două irise recompuse dau `idle.png` cu **RMS 0,10** — adică poza ta, tăiată corect, fără nimic redesemnat.
 
 ## Specificația de rig (din `izentric.rigspec.json`)
 
 Arbore de deformatoare:
 
+Ordinea de desenare (de sus în jos): `eyes_closed`, `mouth_open`, `iris_L`, `iris_R`, `body`, `head`.
+Trupul stă **peste** cap: gulerul acoperă îmbinarea, deci capul poate roti fără cusătură vizibilă.
+
 ```
 D_Root
 ├── D_HeadRot (rotation, pivot 512,655)        ← ParamAngleZ
 │   └── D_HeadWarp (warp, pivot 512,430)       ← ParamAngleX, ParamAngleY
-│       ├── head, eyes_closed, mouth_open
+│       ├── head (cu gâtul), eyes_closed, mouth_open
 │       └── iris_L, iris_R (cu clipping pe eye_mask_L/R)
 └── D_Body (warp, pivot 512,900)               ← ParamBodyAngleX, ParamBodyAngleZ, ParamBreath
-    └── body
+    └── body (fără piele: doar hanoracul)
 ```
+
+Testat la rotirea maximă din spec: la ±8° rămân **0, respectiv 1 pixel** transparent în banda gulerului (verificat de `test_no_gap_at_the_collar_when_the_head_rotates`).
 
 Keyform-uri (pe canvasul de 1024):
 

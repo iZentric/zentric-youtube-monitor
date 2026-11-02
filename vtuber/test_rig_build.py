@@ -16,7 +16,7 @@ def difference(first: Image.Image, second: Image.Image) -> np.ndarray:
 def test_layers_rebuild_the_original_picture():
     """head + body + cele două irise trebuie să dea `idle.png` la pixel."""
     layers = build_layers()
-    rebuilt = composite(layers, ["head", "body", "iris_L", "iris_R"])
+    rebuilt = composite(layers)
     original = Image.open(ASSETS / "idle.png").convert("RGBA")
     assert np.sqrt((difference(rebuilt, original) ** 2).mean()) < 1.0
 
@@ -24,7 +24,7 @@ def test_layers_rebuild_the_original_picture():
 def test_head_and_body_split_at_the_collar():
     layers = build_layers()
     head, body = layers["head"], layers["body"]
-    assert head.getchannel("A").getbbox()[3] > rig_build.CUT_Y          # capul coboară peste guler
+    assert head.getchannel("A").getbbox()[3] > rig_build.CUT_Y          # gâtul coboară sub guler
     assert body.getchannel("A").getbbox()[1] < rig_build.CUT_Y          # trupul urcă sub cap
     assert head.getchannel("A").getbbox()[1] < 60                       # vârful capului e sus
     assert body.getchannel("A").getbbox()[3] == head.size[1]            # trupul ajunge în marginea de jos
@@ -98,10 +98,31 @@ def test_psd_round_trip_keeps_the_layers():
     names = [layer.name.strip("\x00") for layer in flatten(psd)]
     assert sorted(names) == sorted(rig_build.DRAW_ORDER)
     groups = [layer.name.strip("\x00") for layer in psd if layer.is_group()]
-    assert groups == ["BODY", "HEAD", "MASKS", "FACE"]
+    assert groups == ["HEAD", "BODY", "MASKS", "FACE"]
 
     rebuilt = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
-    for layer in flatten(psd, visible_only=True):
+    for layer in reversed(list(flatten(psd, visible_only=True))):
         rebuilt.alpha_composite(layer.topil().convert("RGBA"))
     original = Image.open(ASSETS / "idle.png").convert("RGBA")
     assert np.sqrt((difference(rebuilt, original) ** 2).mean()) < 1.0
+
+
+def test_body_has_no_skin_so_the_neck_rotates_with_the_head():
+    layers = build_layers()
+    body = np.asarray(layers["body"])
+    skin = rig_build.skin_mask(layers["body"])
+    assert skin.sum() == 0, "gâtul a rămas în trup: la rotire ar sta pe loc"
+    assert body[..., 3].sum() > 0
+
+
+def test_no_gap_at_the_collar_when_the_head_rotates():
+    """Cusătura de la guler, la rotirea maximă din rigspec (±8°)."""
+    layers = build_layers()
+    for angle in (-8, 0, 8):
+        rotated = layers["head"].rotate(angle, resample=Image.BICUBIC, center=(512, 655))
+        frame = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
+        frame.alpha_composite(layers["body"])
+        frame.alpha_composite(rotated)
+        alpha = np.asarray(frame)[..., 3]
+        band = alpha[640:760, 300:730]
+        assert (band < 8).sum() <= 5, f"gol de {int((band < 8).sum())} pixeli la rotire {angle}°"
