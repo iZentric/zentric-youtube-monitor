@@ -13,7 +13,8 @@ Ce e aici:
 | `ART-BRIEF.md` | ce poze noi trebuie desenate, în ce ordine, cu specificații exacte |
 | `rig_build.py` | taie pozele în straturi (cap, trup, irise, pleoape, gură) și scrie PSD + model3/cdi3 |
 | `rig/` | PSD-ul cu 6 straturi și fișierele modelului, gata de rigat în Ayatsuri2D/Umamo/Cubism |
-| `RIG.md` | cum ajunge PSD-ul în `.moc3` pentru VTube Studio, pas cu pas |
+| `RIG.md` | cum ajunge PSD-ul în `.moc3` pentru VTube Studio, pe standardul oficial Live2D |
+| `check_model.py` | verifică un model exportat înainte de VTS (moc3, texturi, parametri, referințe) |
 | `README.md` | pornire, OBS, reacții, checklist |
 | `vts.py` | conexiunea + autentificarea la API-ul VTube Studio (folosită de ambele scripturi) |
 | `face_reactions.py` | pornește expresii când faci anumite fețe (zâmbet, surprindere, cu ochiul, cap înclinat) |
@@ -23,7 +24,7 @@ Ce e aici:
 | `doctor.py` | verifică tot lanțul într-o comandă: model, tracker, expresii, reguli, monitor |
 | `CHARACTER.md` | specificațiile caracterului (straturi, parametri, expresii, pachetul de reacții) pentru rigger |
 | `reactions.dog.json` | pachetul de reacții `laugh / panic / bruh / angry`, gata de copiat în `reactions.json` la modelul nou |
-| `test_pngtuber.py`, `test_puppet.py`, `test_rig_build.py` | 30 teste pe motorul de stări, pe cadre și pe straturile modelului |
+| `test_pngtuber.py`, `test_puppet.py`, `test_rig_build.py`, `test_check_model.py` | 42 teste: stări, cadre, straturi, schema modelului, validator |
 | `test_vts_bridge.py`, `test_face_reactions.py`, `test_model_tool.py`, `test_doctor.py` | 25 teste, rulate pe un server VTube Studio fals și pe modele de test |
 | `models/` | modelele descărcate local (ignorat de git) |
 

@@ -97,6 +97,22 @@ def iris_masks(size: tuple[int, int], circles: dict[str, tuple[int, int, int]] |
     return grids["L"], grids["R"]
 
 
+EYE_MASK_SCALE = (1.55, 1.45)  # cât de mare e deschiderea ochiului față de iris (măsurat vizual)
+
+
+def eye_mask_masks(size, circles=None):
+    """Elipse aproximative ale deschiderii ochilor — ținta de clipping pentru irise."""
+    circles = circles or IRIS_CIRCLES
+    width, height = size
+    ys, xs = np.mgrid[0:height, 0:width]
+    out = {}
+    for side in ("L", "R"):
+        cx, cy, radius = circles[side]
+        rx, ry = radius * EYE_MASK_SCALE[0], radius * EYE_MASK_SCALE[1]
+        out[side] = ((xs - cx) / rx) ** 2 + ((ys - cy) / ry) ** 2 <= 1.0
+    return out
+
+
 def build_layers(
     source: Image.Image | None = None,
     assets: Path = ASSETS,
@@ -125,7 +141,12 @@ def build_layers(
     body = Image.new("RGBA", source.size, (0, 0, 0, 0))
     body.paste(source.crop((0, CUT_Y - BODY_BLEED, width, height)), (0, CUT_Y - BODY_BLEED))
 
+    eye_masks = eye_mask_masks(source.size, circles)
     layers: dict[str, Image.Image] = {"head": head, "body": body}
+    for side, mask in eye_masks.items():
+        layer = np.zeros_like(pixels)
+        layer[mask] = [255, 255, 255, 255]
+        layers[f"eye_mask_{side}"] = Image.fromarray(layer, "RGBA")
     for name, mask in (("iris_L", left), ("iris_R", right)):
         layer = np.zeros_like(pixels)
         layer[mask] = pixels[mask]
@@ -162,36 +183,55 @@ def composite(layers: dict[str, Image.Image], order: list[str] | None = None) ->
     return frame
 
 
-def write_psd(path: Path, layers: dict[str, Image.Image], order: list[str] | None = None) -> Path:
-    """PSD cu straturi cu nume — ce se deschide direct în Ayatsuri2D / Umamo / Cubism."""
+DRAW_ORDER = ["eyes_closed", "mouth_open", "iris_L", "iris_R", "eye_mask_L", "eye_mask_R", "head", "body"]
+
+GROUPS = [
+    ("FACE", True, ["eyes_closed", "mouth_open", "iris_L", "iris_R"]),
+    ("MASKS", False, ["eye_mask_L", "eye_mask_R"]),
+    ("HEAD", True, ["head"]),
+    ("BODY", True, ["body"]),
+]
+HIDDEN_BY_DEFAULT = {"eyes_closed", "mouth_open"}
+CLIPPING = {"iris_L": "eye_mask_L", "iris_R": "eye_mask_R"}
+
+
+def write_psd(path: Path, layers: dict[str, Image.Image]) -> Path:
+    """PSD grupat, ca un rigger să se orienteze din prima: FACE / MASKS / HEAD / BODY."""
     from pytoshop import enums
     from pytoshop.user import nested_layers
 
-    order = order or ["eyes_closed", "mouth_open", "iris_L", "iris_R", "head", "body"]
-    entries = []
-    for name in order:
+    def entry(name: str):
         image = layers[name]
-        channels = {0: np.asarray(image)[..., 0], 1: np.asarray(image)[..., 1], 2: np.asarray(image)[..., 2]}
-        channels[-1] = np.asarray(image)[..., 3]
-        entries.append(
-            nested_layers.Image(
-                name=name.encode("ascii"),
-                visible=True,
-                opacity=255,
-                top=0,
-                left=0,
-                bottom=image.height,
-                right=image.width,
-                channels=channels,
-                blend_mode=enums.BlendMode.normal,
+        array = np.asarray(image)
+        return nested_layers.Image(
+            name=name,
+            visible=name not in HIDDEN_BY_DEFAULT,
+            opacity=255,
+            top=0,
+            left=0,
+            bottom=image.height,
+            right=image.width,
+            channels={0: array[..., 0], 1: array[..., 1], 2: array[..., 2], -1: array[..., 3]},
+            blend_mode=enums.BlendMode.normal,
+        )
+
+    tree = []
+    for group_name, visible, members in GROUPS:
+        tree.append(
+            nested_layers.Group(
+                name=group_name,
+                visible=visible,
+                layers=[entry(member) for member in members],
+                closed=False,
             )
         )
+    height, width = layers["head"].height, layers["head"].width
     psd = nested_layers.nested_layers_to_psd(
-        entries,
+        tree,
         color_mode=enums.ColorMode.rgb,
         depth=8,
-        size=(layers["head"].height, layers["head"].width),
-        compression=enums.Compression.zip,  # RLE are nevoie de un pachet extern care lipsește
+        size=(height, width),
+        compression=enums.Compression.zip,  # RLE ar cere pachetul `packbits`, care nu e instalat
     )
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "wb") as handle:
@@ -199,83 +239,169 @@ def write_psd(path: Path, layers: dict[str, Image.Image], order: list[str] | Non
     return path
 
 
+# ID-urile și grupele standard sunt cele din modelul oficial Live2D (Mao.cdi3.json).
 PARAMETERS = [
-    ("ParamAngleX", -30, 30, 0),
-    ("ParamAngleY", -30, 30, 0),
-    ("ParamAngleZ", -30, 30, 0),
-    ("ParamEyeLOpen", 0, 1, 1),
-    ("ParamEyeROpen", 0, 1, 1),
-    ("ParamEyeBallX", -1, 1, 0),
-    ("ParamEyeBallY", -1, 1, 0),
-    ("ParamMouthOpenY", 0, 1, 0),
-    ("ParamMouthForm", -1, 1, 0),
-    ("ParamBrowLY", -1, 1, 0),
-    ("ParamBrowRY", -1, 1, 0),
-    ("ParamBodyAngleX", -10, 10, 0),
-    ("ParamBodyAngleZ", -10, 10, 0),
-    ("ParamBreath", 0, 1, 0),
+    ("ParamAngleX", "ParamGroupFace", "Unghi cap X", -30, 30, 0),
+    ("ParamAngleY", "ParamGroupFace", "Unghi cap Y", -30, 30, 0),
+    ("ParamAngleZ", "ParamGroupFace", "Unghi cap Z", -30, 30, 0),
+    ("ParamEyeLOpen", "ParamGroupEyes", "Ochi stâng deschis", 0, 1, 1),
+    ("ParamEyeROpen", "ParamGroupEyes", "Ochi drept deschis", 0, 1, 1),
+    ("ParamEyeBallX", "ParamGroupEyeballs", "Privire X", -1, 1, 0),
+    ("ParamEyeBallY", "ParamGroupEyeballs", "Privire Y", -1, 1, 0),
+    ("ParamBrowLY", "ParamGroupBrows", "Sprânceană stânga sus", -1, 1, 0),
+    ("ParamBrowRY", "ParamGroupBrows", "Sprânceană dreapta sus", -1, 1, 0),
+    ("ParamMouthOpenY", "ParamGroupMouth", "Gură deschisă", 0, 1, 0),
+    ("ParamMouthForm", "ParamGroupMouth", "Formă gură", -1, 1, 0),
+    ("ParamBodyAngleX", "ParamGroupBody", "Unghi corp X", -10, 10, 0),
+    ("ParamBodyAngleZ", "ParamGroupBody", "Unghi corp Z", -10, 10, 0),
+    ("ParamBreath", "ParamGroupBody", "Respirație", 0, 1, 0),
+    ("ParamHairFront", "ParamGroupSway", "Șuvițe față", -1, 1, 0),
+    ("ParamString", "ParamGroupSway", "Șnururi glugă", -1, 1, 0),
+]
+
+PARAMETER_GROUPS = [
+    ("ParamGroupFace", "Față"),
+    ("ParamGroupEyes", "Ochii deschiși închiși"),
+    ("ParamGroupEyeballs", "Glob ocular"),
+    ("ParamGroupBrows", "Sprâncene"),
+    ("ParamGroupMouth", "Gură"),
+    ("ParamGroupBody", "Corp"),
+    ("ParamGroupSway", "Fizică"),
 ]
 
 
-def write_sidecars(directory: Path, texture_name: str = "texture_00.png") -> dict[str, Path]:
-    """Fișierele care însoțesc modelul: model3 (ce încarcă VTS) și cdi3 (numele parametrilor).
-
-    Fizica nu se inventează de aici: se generează de editorul care face exportul, după
-    ce straturile au fost legate de parametri.
-    """
-    directory = Path(directory)
-    directory.mkdir(parents=True, exist_ok=True)
-    model = {
+def model3(texture: str = "texture_00.png") -> dict:
+    return {
         "Version": 3,
         "FileReferences": {
             "Moc": "izentric.moc3",
-            "Textures": [texture_name],
+            "Textures": [texture],
             "DisplayInfo": "izentric.cdi3.json",
-            "Expressions": [{"Name": "laugh", "File": "expressions/laugh.exp3.json"}],
         },
         "Groups": [
-            {"Target": "Parameter", "Name": "EyeBlink", "Ids": ["ParamEyeLOpen", "ParamEyeROpen"]},
             {"Target": "Parameter", "Name": "LipSync", "Ids": ["ParamMouthOpenY"]},
+            {"Target": "Parameter", "Name": "EyeBlink", "Ids": ["ParamEyeLOpen", "ParamEyeROpen"]},
         ],
-        "HitAreas": [{"Id": "Head", "Name": "Head"}],
+        "HitAreas": [
+            {"Id": "HitAreaHead", "Name": "Head"},
+            {"Id": "HitAreaBody", "Name": "Body"},
+        ],
     }
-    display = {
+
+
+def cdi3() -> dict:
+    return {
         "Version": 3,
         "Parameters": [
-            {
-                "Id": param,
-                "GroupId": "ParamGroup" + param,
-                "Name": param,
-            }
-            for param, _low, _high, _default in PARAMETERS
+            {"Id": param, "GroupId": group, "Name": label} for param, group, label, _lo, _hi, _default in PARAMETERS
         ],
-        "ParameterGroups": [
-            {"Id": "ParamGroup" + param, "GroupId": "", "Name": label}
-            for param, label in (
-                ("ParamAngleX", "Cap: rotire stânga-dreapta"),
-                ("ParamAngleY", "Cap: sus-jos"),
-                ("ParamAngleZ", "Cap: înclinare"),
-                ("ParamEyeLOpen", "Ochi stâng: deschis"),
-                ("ParamEyeROpen", "Ochi drept: deschis"),
-                ("ParamEyeBallX", "Privire: stânga-dreapta"),
-                ("ParamEyeBallY", "Privire: sus-jos"),
-                ("ParamMouthOpenY", "Gură: deschisă"),
-                ("ParamMouthForm", "Gură: formă"),
-                ("ParamBodyAngleX", "Corp: rotire"),
-                ("ParamBodyAngleZ", "Corp: înclinare"),
-                ("ParamBreath", "Respirație"),
-            )
+        "ParameterGroups": [{"Id": group, "GroupId": "", "Name": label} for group, label in PARAMETER_GROUPS],
+        "Parts": [],
+    }
+
+
+def rig_spec() -> dict:
+    """Ce are de făcut rigger-ul, cu valori concrete în pixeli pe canvasul de 1024."""
+    return {
+        "canvas": {"width": 1024, "height": 1024, "pivot_neck": [512, 655]},
+        "standard": "Live2D Cubism model3 / moc3 5.0",
+        "draw_order": DRAW_ORDER,
+        "clipping": CLIPPING,
+        "deformers": [
+            {"id": "D_Root", "type": "root", "children": ["D_HeadRot", "D_Body"]},
+            {
+                "id": "D_Body",
+                "type": "warp",
+                "layers": ["body"],
+                "pivot": [512, 900],
+                "parameters": ["ParamBodyAngleX", "ParamBodyAngleZ", "ParamBreath"],
+            },
+            {
+                "id": "D_HeadRot",
+                "type": "rotation",
+                "parent": "D_Root",
+                "layers": ["head"],
+                "pivot": [512, 655],
+                "parameters": ["ParamAngleZ"],
+            },
+            {
+                "id": "D_HeadWarp",
+                "type": "warp",
+                "parent": "D_HeadRot",
+                "layers": ["head", "iris_L", "iris_R", "eyes_closed", "mouth_open"],
+                "pivot": [512, 430],
+                "parameters": ["ParamAngleX", "ParamAngleY"],
+            },
+        ],
+        "keyforms": {
+            "ParamAngleX": [
+                {"value": -30, "deformer": "D_HeadWarp", "translate": [-14, 0]},
+                {"value": 0, "deformer": "D_HeadWarp", "translate": [0, 0]},
+                {"value": 30, "deformer": "D_HeadWarp", "translate": [14, 0]},
+            ],
+            "ParamAngleY": [
+                {"value": -30, "deformer": "D_HeadWarp", "translate": [0, 10]},
+                {"value": 0, "deformer": "D_HeadWarp", "translate": [0, 0]},
+                {"value": 30, "deformer": "D_HeadWarp", "translate": [0, -10]},
+            ],
+            "ParamAngleZ": [
+                {"value": -30, "deformer": "D_HeadRot", "rotate": -8},
+                {"value": 0, "deformer": "D_HeadRot", "rotate": 0},
+                {"value": 30, "deformer": "D_HeadRot", "rotate": 8},
+            ],
+            "ParamEyeLOpen": [
+                {"value": 0, "layer": "eyes_closed", "opacity": 100},
+                {"value": 1, "layer": "eyes_closed", "opacity": 0},
+            ],
+            "ParamEyeROpen": [
+                {"value": 0, "layer": "eyes_closed", "opacity": 100},
+                {"value": 1, "layer": "eyes_closed", "opacity": 0},
+            ],
+            "ParamEyeBallX": [
+                {"value": -1, "layers": ["iris_L", "iris_R"], "translate": [-11, 0]},
+                {"value": 0, "layers": ["iris_L", "iris_R"], "translate": [0, 0]},
+                {"value": 1, "layers": ["iris_L", "iris_R"], "translate": [11, 0]},
+            ],
+            "ParamEyeBallY": [
+                {"value": -1, "layers": ["iris_L", "iris_R"], "translate": [0, -9]},
+                {"value": 0, "layers": ["iris_L", "iris_R"], "translate": [0, 0]},
+                {"value": 1, "layers": ["iris_L", "iris_R"], "translate": [0, 9]},
+            ],
+            "ParamMouthOpenY": [
+                {"value": 0, "layer": "mouth_open", "opacity": 0},
+                {"value": 1, "layer": "mouth_open", "opacity": 100},
+            ],
+            "ParamBodyAngleX": [
+                {"value": -10, "deformer": "D_Body", "translate": [-6, 0]},
+                {"value": 0, "deformer": "D_Body", "translate": [0, 0]},
+                {"value": 10, "deformer": "D_Body", "translate": [6, 0]},
+            ],
+            "ParamBreath": [
+                {"value": 0, "deformer": "D_Body", "translate": [0, 0]},
+                {"value": 1, "deformer": "D_Body", "translate": [0, -3]},
+            ],
+        },
+        "notes": [
+            "eyes_closed și mouth_open se pot lega și pe opacitate (mai simplu) sau pe clipping (mai curat).",
+            "iris_L / iris_R au nevoie de clipping pe eye_mask_L / eye_mask_R, altfel ies din ochi.",
+            "Sprâncenele sunt desenate în cap: ParamBrowLY/RY există în cdi3, dar nu au ce mișca până nu sunt pe strat separat.",
         ],
     }
-    paths = {}
+
+
+def write_sidecars(directory: Path, texture: str = "texture_00.png") -> dict[str, Path]:
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    written = {}
     for name, payload in (
-        ("izentric.model3.json", model),
-        ("izentric.cdi3.json", display),
+        ("izentric.model3.json", model3(texture)),
+        ("izentric.cdi3.json", cdi3()),
+        ("izentric.rigspec.json", rig_spec()),
     ):
         path = directory / name
         path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
-        paths[name] = path
-    return paths
+        written[name] = path
+    return written
 
 
 def parse_iris_arguments(values: list[str]) -> dict[str, tuple[int, int, int]]:
@@ -306,7 +432,7 @@ def main(argv: list[str] | None = None) -> int:
         image.save(OUT / f"{name}.png")
     write_psd(OUT / "izentric.psd", layers)
     write_sidecars(OUT)
-    print(f"scrise {len(layers)} straturi + PSD + model3/cdi3 în {OUT}")
+    print(f"scrise {len(layers)} straturi + PSD + model3/cdi3/rigspec în {OUT}")
     return 0
 
 

@@ -3,135 +3,121 @@
   "Parameters": [
     {
       "Id": "ParamAngleX",
-      "GroupId": "ParamGroupParamAngleX",
-      "Name": "ParamAngleX"
+      "GroupId": "ParamGroupFace",
+      "Name": "Unghi cap X"
     },
     {
       "Id": "ParamAngleY",
-      "GroupId": "ParamGroupParamAngleY",
-      "Name": "ParamAngleY"
+      "GroupId": "ParamGroupFace",
+      "Name": "Unghi cap Y"
     },
     {
       "Id": "ParamAngleZ",
-      "GroupId": "ParamGroupParamAngleZ",
-      "Name": "ParamAngleZ"
+      "GroupId": "ParamGroupFace",
+      "Name": "Unghi cap Z"
     },
     {
       "Id": "ParamEyeLOpen",
-      "GroupId": "ParamGroupParamEyeLOpen",
-      "Name": "ParamEyeLOpen"
+      "GroupId": "ParamGroupEyes",
+      "Name": "Ochi stâng deschis"
     },
     {
       "Id": "ParamEyeROpen",
-      "GroupId": "ParamGroupParamEyeROpen",
-      "Name": "ParamEyeROpen"
+      "GroupId": "ParamGroupEyes",
+      "Name": "Ochi drept deschis"
     },
     {
       "Id": "ParamEyeBallX",
-      "GroupId": "ParamGroupParamEyeBallX",
-      "Name": "ParamEyeBallX"
+      "GroupId": "ParamGroupEyeballs",
+      "Name": "Privire X"
     },
     {
       "Id": "ParamEyeBallY",
-      "GroupId": "ParamGroupParamEyeBallY",
-      "Name": "ParamEyeBallY"
-    },
-    {
-      "Id": "ParamMouthOpenY",
-      "GroupId": "ParamGroupParamMouthOpenY",
-      "Name": "ParamMouthOpenY"
-    },
-    {
-      "Id": "ParamMouthForm",
-      "GroupId": "ParamGroupParamMouthForm",
-      "Name": "ParamMouthForm"
+      "GroupId": "ParamGroupEyeballs",
+      "Name": "Privire Y"
     },
     {
       "Id": "ParamBrowLY",
-      "GroupId": "ParamGroupParamBrowLY",
-      "Name": "ParamBrowLY"
+      "GroupId": "ParamGroupBrows",
+      "Name": "Sprânceană stânga sus"
     },
     {
       "Id": "ParamBrowRY",
-      "GroupId": "ParamGroupParamBrowRY",
-      "Name": "ParamBrowRY"
+      "GroupId": "ParamGroupBrows",
+      "Name": "Sprânceană dreapta sus"
+    },
+    {
+      "Id": "ParamMouthOpenY",
+      "GroupId": "ParamGroupMouth",
+      "Name": "Gură deschisă"
+    },
+    {
+      "Id": "ParamMouthForm",
+      "GroupId": "ParamGroupMouth",
+      "Name": "Formă gură"
     },
     {
       "Id": "ParamBodyAngleX",
-      "GroupId": "ParamGroupParamBodyAngleX",
-      "Name": "ParamBodyAngleX"
+      "GroupId": "ParamGroupBody",
+      "Name": "Unghi corp X"
     },
     {
       "Id": "ParamBodyAngleZ",
-      "GroupId": "ParamGroupParamBodyAngleZ",
-      "Name": "ParamBodyAngleZ"
+      "GroupId": "ParamGroupBody",
+      "Name": "Unghi corp Z"
     },
     {
       "Id": "ParamBreath",
-      "GroupId": "ParamGroupParamBreath",
-      "Name": "ParamBreath"
+      "GroupId": "ParamGroupBody",
+      "Name": "Respirație"
+    },
+    {
+      "Id": "ParamHairFront",
+      "GroupId": "ParamGroupSway",
+      "Name": "Șuvițe față"
+    },
+    {
+      "Id": "ParamString",
+      "GroupId": "ParamGroupSway",
+      "Name": "Șnururi glugă"
     }
   ],
   "ParameterGroups": [
     {
-      "Id": "ParamGroupParamAngleX",
+      "Id": "ParamGroupFace",
       "GroupId": "",
-      "Name": "Cap: rotire stânga-dreapta"
+      "Name": "Față"
     },
     {
-      "Id": "ParamGroupParamAngleY",
+      "Id": "ParamGroupEyes",
       "GroupId": "",
-      "Name": "Cap: sus-jos"
+      "Name": "Ochii deschiși închiși"
     },
     {
-      "Id": "ParamGroupParamAngleZ",
+      "Id": "ParamGroupEyeballs",
       "GroupId": "",
-      "Name": "Cap: înclinare"
+      "Name": "Glob ocular"
     },
     {
-      "Id": "ParamGroupParamEyeLOpen",
+      "Id": "ParamGroupBrows",
       "GroupId": "",
-      "Name": "Ochi stâng: deschis"
+      "Name": "Sprâncene"
     },
     {
-      "Id": "ParamGroupParamEyeROpen",
+      "Id": "ParamGroupMouth",
       "GroupId": "",
-      "Name": "Ochi drept: deschis"
+      "Name": "Gură"
     },
     {
-      "Id": "ParamGroupParamEyeBallX",
+      "Id": "ParamGroupBody",
       "GroupId": "",
-      "Name": "Privire: stânga-dreapta"
+      "Name": "Corp"
     },
     {
-      "Id": "ParamGroupParamEyeBallY",
+      "Id": "ParamGroupSway",
       "GroupId": "",
-      "Name": "Privire: sus-jos"
-    },
-    {
-      "Id": "ParamGroupParamMouthOpenY",
-      "GroupId": "",
-      "Name": "Gură: deschisă"
-    },
-    {
-      "Id": "ParamGroupParamMouthForm",
-      "GroupId": "",
-      "Name": "Gură: formă"
-    },
-    {
-      "Id": "ParamGroupParamBodyAngleX",
-      "GroupId": "",
-      "Name": "Corp: rotire"
-    },
-    {
-      "Id": "ParamGroupParamBodyAngleZ",
-      "GroupId": "",
-      "Name": "Corp: înclinare"
-    },
-    {
-      "Id": "ParamGroupParamBreath",
-      "GroupId": "",
-      "Name": "Respirație"
+      "Name": "Fizică"
     }
-  ]
+  ],
+  "Parts": []
 }

@@ -72,25 +72,36 @@ def test_sidecars_reference_the_moc3_and_the_parameters():
     model = json.loads((OUT / "izentric.model3.json").read_text(encoding="utf-8"))
     display = json.loads((OUT / "izentric.cdi3.json").read_text(encoding="utf-8"))
     assert model["FileReferences"]["Moc"] == "izentric.moc3"
-    assert model["Groups"][0]["Ids"] == ["ParamEyeLOpen", "ParamEyeROpen"]
+    groups = {group["Name"]: group["Ids"] for group in model["Groups"]}
+    assert groups["EyeBlink"] == ["ParamEyeLOpen", "ParamEyeROpen"]
+    assert groups["LipSync"] == ["ParamMouthOpenY"]
     ids = {entry["Id"] for entry in display["Parameters"]}
     assert {"ParamAngleX", "ParamMouthOpenY", "ParamEyeBallX"} <= ids
-    assert set(written) == {"izentric.model3.json", "izentric.cdi3.json"}
+    assert set(written) == {"izentric.model3.json", "izentric.cdi3.json", "izentric.rigspec.json"}
 
 
-def test_psd_round_trip_keeps_the_layers(tmp_path=None):
+def flatten(layers, visible_only=False):
+    for layer in layers:
+        if layer.is_group():
+            if not visible_only or layer.visible:
+                yield from flatten(layer, visible_only)
+        elif not visible_only or layer.visible:
+            yield layer
+
+
+def test_psd_round_trip_keeps_the_layers():
     from psd_tools import PSDImage
 
     layers = build_layers()
     path = rig_build.write_psd(OUT / "izentric.psd", layers)
     psd = PSDImage.open(path)
-    names = [layer.name.strip("\x00") for layer in psd]
-    assert names == ["body", "head", "iris_R", "iris_L", "mouth_open", "eyes_closed"]
+    names = [layer.name.strip("\x00") for layer in flatten(psd)]
+    assert sorted(names) == sorted(rig_build.DRAW_ORDER)
+    groups = [layer.name.strip("\x00") for layer in psd if layer.is_group()]
+    assert groups == ["BODY", "HEAD", "MASKS", "FACE"]
 
     rebuilt = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
-    for layer in psd:
-        name = layer.name.strip("\x00")
-        if name in {"body", "head", "iris_L", "iris_R"}:
-            rebuilt.alpha_composite(layer.topil().convert("RGBA"))
+    for layer in flatten(psd, visible_only=True):
+        rebuilt.alpha_composite(layer.topil().convert("RGBA"))
     original = Image.open(ASSETS / "idle.png").convert("RGBA")
     assert np.sqrt((difference(rebuilt, original) ** 2).mean()) < 1.0
