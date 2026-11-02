@@ -10,7 +10,8 @@ Ce e aici:
 | `reactions.json` | regulile „față → expresie” |
 | `vts_bridge.py` | pornește o animație în VTube Studio când monitorul vede un clip nou |
 | `model_tool.py` | inspectează un model Live2D și îl instalează în folderul VTube Studio |
-| `test_vts_bridge.py`, `test_face_reactions.py`, `test_model_tool.py` | 19 teste, rulate pe un server VTube Studio fals și pe modele de test |
+| `doctor.py` | verifică tot lanțul într-o comandă: model, tracker, expresii, reguli, monitor |
+| `test_vts_bridge.py`, `test_face_reactions.py`, `test_model_tool.py`, `test_doctor.py` | 24 teste, rulate pe un server VTube Studio fals și pe modele de test |
 | `models/` | modelele descărcate local (ignorat de git) |
 
 ## 1. Verdict: ce model ai (confirmat)
@@ -36,6 +37,19 @@ Dacă mai târziu schimbi modelul: `*.moc3` + `*.model3.json` → 2D Live2D → 
 | VSeeFace | 3D VRM | gratuit și simplu, dar fără API de expresii; nu deschide Live2D |
 
 Concluzia: pentru un model Live2D, VTube Studio nu e „o variantă”, e singura variantă serioasă. Alternativele devin relevante doar dacă treci pe model 3D.
+
+### Există ceva mai bun? (verificat pe GitHub, noiembrie 2026)
+
+| soft | sursă | 2D Live2D (`.moc3`) | API pentru automatizări | verdict |
+| --- | --- | --- | --- | --- |
+| **VTube Studio** | closed source, Steam | da | **da** (API public: expresii, hotkeys, parametri) | **ales** — singurul unde merge `face_reactions.py` |
+| [open-vt](https://github.com/erodozer/open-vt) | MIT, ★307, activ (push oct. 2026) | da, prin runtime-ul Ayagami | **nu** — „feature parity cu VTS, excluzând pluginurile” | singura alternativă open-source serioasă; Linux-first, build din sursă, fără API |
+| LilacVT | MIT, fork după open-vt, ★2, v0.1.7 | da | nu | experimental, nu pentru producție |
+| Inochi2D / Inochi Session | BSD-2 | nu — format propriu (INP) | nu | alt ecosistem, modelul se righează din nou |
+| VSeeFace, VNyan, Warudo | gratuite, closed source | nu | parțial (VMC) | doar pentru modele 3D VRM |
+| Ayatsuri2D | GPL-3.0 (editor), runtime MIT | exportă `.moc3` | n/a (editor, nu tracker) | de folosit când îți faci model propriu, gratis, în loc de Cubism PRO |
+
+Concluzia pe surse, nu pe impresii: pentru model Live2D + webcam + automatizări pe Windows, **VTube Studio rămâne singura opțiune completă**. open-vt e proiectul de urmărit, dar nu are API de pluginuri, deci reacțiile automate de aici nu ar funcționa în el.
 
 ### Modele gratuite bune și legale (instalate de `model_tool.py`)
 
@@ -117,6 +131,16 @@ Pentru „reacționează când vorbesc”: lasă lip-sync-ul din VTube Studio pe
 
 Calibrare: pornește cu praguri la 0,5 și ajustează după 2 minute de teste — dacă se declanșează prea des, urcă pragul; dacă nu prinde, coboară-l. Cine vrea mai mult: modelul trebuie să aibă expresii bune (rigger-ul le face), softul doar le pornește.
 
+### Ordinea de pornire (3 comenzi)
+
+```
+python vtuber/model_tool.py install --github Mao   # o dată: instalează modelul în VTube Studio
+python vtuber/doctor.py                            # înainte de fiecare sesiune: ce e în neregulă
+python vtuber/face_reactions.py                    # cât timp înregistrezi: reacții după față
+```
+
+`doctor.py` tipărește exact ce nu merge (fără model, trackerul nu vede fața, lipsesc parametri de tracking, regulile nu se potrivesc cu expresiile modelului) și întoarce cod de ieșire 1 dacă nu ești gata de înregistrare.
+
 ## 6. Compoziție care ține omul pe video (Minecraft, video editate)
 
 - Avatar 15–20% din înălțimea cadrului, colț dreapta-jos; niciodată peste hotbar, inventar sau minimap.
@@ -126,7 +150,7 @@ Calibrare: pornește cu praguri la 0,5 și ajustează după 2 minute de teste �
 
 ## 7. Checklist înainte de înregistrare
 
-1. VTS pornește cu modelul corect, tracking activ.
+1. `python vtuber/doctor.py` spune „gata de înregistrare”.
 2. `Transparent (OBS)` pornit + **Allow Transparency** în OBS → fără dreptunghi negru sau verde.
 3. Avatarul nu acoperă UI-ul jocului.
 4. Hotkeys/expresiile testate: fiecare față din `reactions.json` trece o dată prin `face_reactions.py`.
@@ -144,6 +168,7 @@ Calibrare: pornește cu praguri la 0,5 și ajustează după 2 minute de teste �
 - Ce expressions/hotkeys are exact Pachan 1.1 se vede abia la prima încărcare în VTS.
 - Scripturile sunt testate pe un server VTS fals, nu pe VTube Studio real (aici nu rulează Windows/OBS/webcam). Instalarea de model e testată real, dar într-un folder temporar, nu în VTS. Prima rulare reală o confirmi tu.
 - Trackerul Mediapipe/NVIDIA nu poate fi testat aici (fără cameră); recomandarea vine din documentația VTS.
+- `doctor.py` a fost rulat doar pe un server VTS fals; pe VTube Studio real îți spune el ce lipsește la prima rulare.
 - Pragurile din `reactions.json` (0,5 / 0,6 / 0,2 / 15°) sunt valori de start, nu calibrate pe fața ta — se ajustează în 2 minute de teste.
 - Numele fișierelor de expresie din `reactions.json` sunt exemple: modelul Pachan are propriile `.exp3.json`, le vezi cu `--list`.
 - Tracking pe iPhone/Android nu e acoperit; e opțiunea următoare dacă webcam-ul nu e suficient.
