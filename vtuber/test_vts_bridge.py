@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 from websockets.sync.server import serve
 
+import vts
 import vts_bridge
 
 RESPONSES = {
@@ -64,7 +65,7 @@ def bridge(monkeypatch, tmp_path: Path):
     state.write_text(json.dumps({"seen": ["old1"]}), encoding="utf-8")
     monkeypatch.setattr(vts_bridge, "LATEST", latest)
     monkeypatch.setattr(vts_bridge, "STATE", state)
-    monkeypatch.setattr(vts_bridge, "TOKEN", tmp_path / "token.json")
+    monkeypatch.setattr(vts, "TOKEN", tmp_path / "token.json")
     return vts_bridge
 
 
@@ -100,12 +101,12 @@ def test_authenticates_and_triggers_hotkey(bridge, monkeypatch):
         "HotkeyTriggerRequest",
     ]
     assert received[2]["data"]["hotkeyID"] == bridge.HOTKEY
-    assert bridge.TOKEN.read_text(encoding="utf-8") == "tok-1"
+    assert vts.TOKEN.read_text(encoding="utf-8") == "tok-1"
     assert json.loads(bridge.STATE.read_text(encoding="utf-8"))["seen"] == ["new1", "old1"]
 
 
 def test_stale_token_is_replaced_once(bridge, monkeypatch):
-    bridge.TOKEN.write_text("expired", encoding="utf-8")
+    vts.TOKEN.write_text("expired", encoding="utf-8")
 
     def respond(request):
         kind = request["messageType"]
@@ -125,7 +126,7 @@ def test_stale_token_is_replaced_once(bridge, monkeypatch):
         ("AuthenticationTokenRequest", None),
         ("AuthenticationRequest", "tok-2"),
     ]
-    assert bridge.TOKEN.read_text(encoding="utf-8") == "tok-2"
+    assert vts.TOKEN.read_text(encoding="utf-8") == "tok-2"
 
 
 def test_vts_error_is_reported_and_state_kept(bridge, monkeypatch):
