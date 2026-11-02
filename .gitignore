@@ -1,0 +1,5 @@
+vtuber/model/
+vtuber/token.json
+vtuber/state.json
+__pycache__/
+.pytest_cache/
