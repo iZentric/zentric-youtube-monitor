@@ -11,6 +11,8 @@ Ce e aici:
 | `vts_bridge.py` | pornește o animație în VTube Studio când monitorul vede un clip nou |
 | `model_tool.py` | inspectează un model Live2D și îl instalează în folderul VTube Studio |
 | `doctor.py` | verifică tot lanțul într-o comandă: model, tracker, expresii, reguli, monitor |
+| `CHARACTER.md` | specificațiile caracterului (straturi, parametri, expresii, pachetul de reacții) pentru rigger |
+| `reactions.dog.json` | pachetul de reacții `laugh / panic / bruh / angry`, gata de copiat în `reactions.json` la modelul nou |
 | `test_vts_bridge.py`, `test_face_reactions.py`, `test_model_tool.py`, `test_doctor.py` | 24 teste, rulate pe un server VTube Studio fals și pe modele de test |
 | `models/` | modelele descărcate local (ignorat de git) |
 

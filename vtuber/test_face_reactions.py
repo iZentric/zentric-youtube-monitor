@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import threading
 from contextlib import contextmanager
+from pathlib import Path
 
 import pytest
 from websockets.sync.client import connect
@@ -66,6 +67,15 @@ def vts_server(values: list[dict]):
         yield server.socket.getsockname()[1], received
     finally:
         server.shutdown()
+
+
+def test_rule_files_are_valid():
+    for name in ("reactions.json", "reactions.dog.json"):
+        rules = json.loads((Path(face_reactions.__file__).with_name(name)).read_text(encoding="utf-8"))["rules"]
+        assert rules
+        for rule in rules:
+            assert {"name", "expressionFile", "when", "holdSeconds", "cooldownSeconds"} <= set(rule)
+            assert rule["holdSeconds"] > 0 and rule["cooldownSeconds"] >= 0
 
 
 def test_resolve_accepts_vts_path_or_bare_file_name():

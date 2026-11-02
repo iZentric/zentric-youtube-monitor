@@ -1,0 +1,57 @@
+{
+  "rules": [
+    {
+      "name": "laugh",
+      "expressionFile": "laugh.exp3.json",
+      "when": {
+        "MouthSmile": {
+          "min": 0.55
+        }
+      },
+      "holdSeconds": 1.2,
+      "cooldownSeconds": 3
+    },
+    {
+      "name": "panic",
+      "expressionFile": "panic.exp3.json",
+      "when": {
+        "MouthOpen": {
+          "min": 0.75
+        },
+        "Brows": {
+          "min": 0.5
+        }
+      },
+      "holdSeconds": 1.2,
+      "cooldownSeconds": 4
+    },
+    {
+      "name": "bruh",
+      "expressionFile": "bruh.exp3.json",
+      "when": {
+        "EyeOpenLeft": {
+          "max": 0.2
+        },
+        "EyeOpenRight": {
+          "min": 0.4
+        }
+      },
+      "holdSeconds": 0.8,
+      "cooldownSeconds": 5
+    },
+    {
+      "name": "angry",
+      "expressionFile": "angry.exp3.json",
+      "when": {
+        "Brows": {
+          "max": -0.5
+        },
+        "MouthOpen": {
+          "min": 0.3
+        }
+      },
+      "holdSeconds": 1.0,
+      "cooldownSeconds": 8
+    }
+  ]
+}
