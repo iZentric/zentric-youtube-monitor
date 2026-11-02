@@ -1,0 +1,79 @@
+{
+  "character": "iZentric (cornițe roșii, păr alb-negru, hanorac yin-yang)",
+  "canvas": {
+    "outputHeight": 720
+  },
+  "assets": {
+    "idle": "idle.png",
+    "blink": "blink.png",
+    "talking": "talking.png",
+    "talking_blink": "talking_blink.png",
+    "laugh": "laugh.png",
+    "love": "love.png",
+    "sad": "sad.png",
+    "shocked": "shocked.png",
+    "sus": "sus.png"
+  },
+  "talk": {
+    "threshold": 0.05,
+    "hangoverSeconds": 0.22
+  },
+  "blink": {
+    "minIntervalSeconds": 2.5,
+    "maxIntervalSeconds": 6.0,
+    "durationSeconds": 0.13
+  },
+  "motion": {
+    "fadeSeconds": 0.09,
+    "bobPixels": 3,
+    "bobPeriodSeconds": 4.0,
+    "punchScale": 1.03,
+    "punchSeconds": 0.15,
+    "punchStates": ["laugh", "love", "sad", "shocked", "sus"]
+  },
+  "rules": [
+    {
+      "name": "shocked",
+      "priority": 90,
+      "holdSeconds": 1.2,
+      "cooldownSeconds": 4,
+      "when": {
+        "jawOpen": { "min": 0.55 },
+        "browInnerUp": { "min": 0.45 }
+      }
+    },
+    {
+      "name": "laugh",
+      "priority": 80,
+      "holdSeconds": 1.6,
+      "cooldownSeconds": 3,
+      "when": {
+        "mouthSmileLeft": { "min": 0.4 },
+        "mouthSmileRight": { "min": 0.4 },
+        "jawOpen": { "min": 0.3 },
+        "eyeSquintLeft": { "min": 0.2 }
+      }
+    },
+    {
+      "name": "sad",
+      "priority": 75,
+      "holdSeconds": 1.5,
+      "cooldownSeconds": 5,
+      "when": {
+        "browInnerUp": { "min": 0.5 },
+        "mouthSmileLeft": { "max": 0.1 },
+        "mouthSmileRight": { "max": 0.1 }
+      }
+    },
+    {
+      "name": "sus",
+      "priority": 70,
+      "holdSeconds": 1.2,
+      "cooldownSeconds": 6,
+      "when": {
+        "mouthSmileLeft": { "min": 0.35 },
+        "mouthSmileRight": { "max": 0.2 }
+      }
+    }
+  ]
+}

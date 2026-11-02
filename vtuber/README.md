@@ -4,7 +4,12 @@ Ce e aici:
 
 | fișier | rol |
 | --- | --- |
-| `README.md` | ce soft alegi, setări, OBS, checklist |
+| `assets/` | **personajul tău**, 9 stări PNG 1024×1024 cu transparență (idle, blink, talking, talking_blink, laugh, love, sad, shocked, sus) |
+| `pngtuber.py` | **overlay-ul propriu-zis**: arată personajul în OBS și îl schimbă automat după voce și după față |
+| `states.izentric.json` | stările, pragurile, timpii de reacție, animația de balans |
+| `facesource.py` | citirea expresiilor din cameră (MediaPipe → `jawOpen`, `mouthSmile`, `browInnerUp`) |
+| `ASSETS.md` | ce am măsurat în pozele tale și ce lipsește ca să devină model Live2D |
+| `README.md` | pornire, OBS, reacții, checklist |
 | `vts.py` | conexiunea + autentificarea la API-ul VTube Studio (folosită de ambele scripturi) |
 | `face_reactions.py` | pornește expresii când faci anumite fețe (zâmbet, surprindere, cu ochiul, cap înclinat) |
 | `reactions.json` | regulile „față → expresie” |
@@ -13,17 +18,52 @@ Ce e aici:
 | `doctor.py` | verifică tot lanțul într-o comandă: model, tracker, expresii, reguli, monitor |
 | `CHARACTER.md` | specificațiile caracterului (straturi, parametri, expresii, pachetul de reacții) pentru rigger |
 | `reactions.dog.json` | pachetul de reacții `laugh / panic / bruh / angry`, gata de copiat în `reactions.json` la modelul nou |
-| `test_vts_bridge.py`, `test_face_reactions.py`, `test_model_tool.py`, `test_doctor.py` | 24 teste, rulate pe un server VTube Studio fals și pe modele de test |
+| `test_pngtuber.py` | 11 teste pe motorul de stări și pe compunerea cadrelor (fade, punch, balans) |
+| `test_vts_bridge.py`, `test_face_reactions.py`, `test_model_tool.py`, `test_doctor.py` | 25 teste, rulate pe un server VTube Studio fals și pe modele de test |
 | `models/` | modelele descărcate local (ignorat de git) |
 
-## 1. Verdict: ce model ai (confirmat)
+## 0. Pornirea rapidă — personajul tău, gata de live
+
+Pozele tale (9 stări, 1024×1024, fundal transparent) sunt în `vtuber/assets/`. Overlay-ul le ține într-o fereastră fără margini, mereu deasupra, cu fundal verde pentru chroma key în OBS.
+
+```
+pip install -r vtuber/requirements.txt
+python vtuber/pngtuber.py --check          # verifică pozele și configul (1 secundă)
+python vtuber/pngtuber.py --calibrate      # o dată: cât de tare trebuie să vorbești ca să pornească `talking`
+python vtuber/pngtuber.py --mic --face     # pornește avatarul
+```
+
+Ce face singur:
+
+| situație | ce se vede | cum e detectat |
+| --- | --- | --- |
+| tăcere | `idle` + clipit la 2,5–6 s | microfon sub prag |
+| vorbești | `talking`, clipește în `talking_blink` | nivel RMS peste prag, cu 0,22 s prelungire după ultimul sunet |
+| râzi (zâmbet + gură deschisă + ochi strânși) | `laugh` | 1,6 s, apoi pauză 3 s |
+| gura căscată + sprâncene sus | `shocked` | 1,2 s, prioritare peste toate |
+| sprâncene ridicate, fără zâmbet | `sad` | 1,5 s |
+| zâmbet doar pe o parte | `sus` | 1,2 s |
+
+Taste (fereastra trebuie să aibă focus): `1` laugh, `2` love, `3` sad, `4` shocked, `5` sus, `0` idle. `Esc` închide. Poziția se salvează în `vtuber/overlay.json`; o muți trăgând de imagine.
+
+Tranzițiile nu sunt tăieturi: 90 ms de fade, un „punch” de 3% la reacții și un balans de ±3 px la respirație — exact lucrurile care fac diferența între „poze comutate” și avatar viu.
+
+### OBS
+
+1. `Sources` → `+` → **Window Capture** → fereastra `iZentric`.
+2. Click dreapta pe sursă → `Filters` → `+` → **Chroma Key** → `Key Color` = verde (`00FF00`); dacă marginile rămân murdare, urcă `Similarity` la ~400.
+3. Altă culoare de fundal: `--bg ff00ff` (magenta) și aceeași culoare în Chroma Key.
+4. Mărime: `--height 900` pentru avatar mai mare, apoi `Ctrl+S` pe sursă ca să păstrezi transformarea.
+
+Alternativa fără chroma key (fundal cu adevărat transparent) cere `-transparentcolor` pe Windows și nu e stabilă pe toate plăcile video; chroma key-ul e metoda care nu te lasă în off la live.
+
+## 1. Dacă treci pe Live2D: ce model ai (informativ)
 
 | fișier din Drive | ce e | consecință |
 | --- | --- | --- |
 | `Pachan_1.1.rar` (3,5 MB) | model **2D Live2D half-body** gratis de la medwokl2d (art: koahri1), publicat pe BOOTH ca „Half-Body Model, VTube Studio (FREE)” | **VTube Studio e softul corect.** Nu Warudo, nu VNyan — alea sunt pentru modele 3D |
-| `mini (1).7z` (122,7 MB) | [presupus] veadotube mini (aplicația PNGtuber; build-ul Windows x64 are ~106 MB) | setup-ul actual = 2 imagini comutate de microfon, fără tracking de față |
 
-Diferența reală la trecerea pe VTS: capul, ochii, sprâncenele și gura urmăresc fața ta, nu doar „gură deschisă / închisă”. Asta se vede imediat pe ecran.
+Secțiunea asta rămâne valabilă abia când personajul există ca **straturi separate** (ochi, pleoape, gură, sprâncene, păr) — atunci se righează în Live2D și VTube Studio îl mișcă pe parametri. Pozele actuale sunt aplatizate, deci varianta de azi e overlay-ul din secțiunea 0; diferența o explică `ASSETS.md`.
 
 **Licență — citește înainte să crești canalul:** modelul cere **credit obligatoriu** (rigger + artist) și permite doar **personal use**; interzice redistribuirea și declararea lui ca al tău. „Personal use” nu acoperă explicit un canal monetizat, deci înainte de monetizare scrie-i lui medwokl2d pe BOOTH sau comandă-ți un model propriu. Credit de pus în descriere: `Model: Pachan 1.1 — art @koahri1, rig @MedL2D`.
 
@@ -166,7 +206,8 @@ python vtuber/face_reactions.py                    # cât timp înregistrezi: re
 ## Ce rămâne neverificat
 
 - Conținutul arhivelor (rar/7z) nu poate fi deschis din sandbox — Drive îmi dă doar metadate, iar descărcarea binară nu trece prin sandbox. Verdictul din secțiunea 1 vine din pagina BOOTH a modelului și din dimensiunile fișierelor.
-- `mini.7z` = veadotube mini rămâne [presupus] (nume + 122,7 MB vs ~106 MB build-ul oficial).
+- Pozele din `assets/` sunt măsurate în `ASSETS.md` (canvas, ancoră, diferențe între stări). Ce nu se poate afla din ele: cum au fost desenate și dacă mai există sursa pe straturi.
+- Overlay-ul e testat pe logică și pe cadre compuse, nu cu fereastră reală, cameră și microfon (sandbox fără GUI). Prima pornire pe PC-ul tău e testul adevărat; `--check` și `--mic` separat izolează orice problemă.
 - Ce expressions/hotkeys are exact Pachan 1.1 se vede abia la prima încărcare în VTS.
 - Scripturile sunt testate pe un server VTS fals, nu pe VTube Studio real (aici nu rulează Windows/OBS/webcam). Instalarea de model e testată real, dar într-un folder temporar, nu în VTS. Prima rulare reală o confirmi tu.
 - Trackerul Mediapipe/NVIDIA nu poate fi testat aici (fără cameră); recomandarea vine din documentația VTS.
