@@ -58,6 +58,20 @@ Diferența maximă între siluete: **±73 px** la nivelul umerilor (≈7 %). De 
 
 Asta e exact setul minim de PNGtuber (idle/talk/blink + emoții) — nu-ți lipsește nimic ca să pornești azi.
 
+## 4b. Ce se poate separa din pozele aplatizate (măsurat)
+
+Diferențele dintre cele patru stări „de bază” sunt curate, nu împrăștiate pe tot cadrul:
+
+| pereche | pixeli schimbați | unde sunt |
+| --- | --- | --- |
+| `idle` ↔ `blink` | 2,95 % | **81 % în banda ochilor** (y 384–512), restul zgomot de compresie |
+| `idle` ↔ `talking` | 1,18 % | **88 % în banda gurii** (y 512–640) |
+| `talking` ↔ `talking_blink` | 3,67 % | 66 % ochi + 20 % gură — adică exact ambele straturi |
+
+Filtrând zgomotul (doar petele mari, prag 40) rămân două măști curate: **ochi** (bbox 303,327–709,513, 3,7 % din cadru) și **gură** (415,480–617,632, 1,5 %). Din ele construiește `puppet.py` păpușa: compoziția `idle` + gura din `talking` + pleoapele din `blink` reproduce `talking_blink` cu 1,68 % pixeli diferiți — adică desenul original diferă singur cu atât.
+
+Stările de emoție (`laugh`, `sad`, `shocked`, `sus`, `love`) sunt desene **diferite** (9,8 / 7,4 / 11,6 / 8,0 / 12,0 % pixeli schimbați, împrăștiați pe față și corp) — nu se pot descompune, deci rămân imagini întregi.
+
 ## 5. Ce lipsește ca să devină model Live2D (nu PNG comutat)
 
 Pozele sunt **aplatizate**: un singur strat per stare. Un model Live2D are nevoie de straturi separate, fiecare cu 5–10 px de „bleed” sub vecin:

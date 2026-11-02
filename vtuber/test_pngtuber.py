@@ -14,7 +14,7 @@ def config() -> dict:
 
 
 def same(a: Image.Image, b: Image.Image) -> bool:
-    return ImageChops.difference(a.convert("RGBA"), b.convert("RGBA")).getbbox() is None
+    return ImageChops.difference(a.convert("RGBA"), b.convert("RGBA")).getbbox(alpha_only=False) is None
 
 
 def test_config_points_to_real_transparent_images():
@@ -258,6 +258,7 @@ def test_overlay_loop_runs_with_fake_tkinter(monkeypatch, tmp_path):
         x = 60
         y = 60
         debug = True
+        puppet = False
 
     assert pngtuber.run_overlay(config(), Args()) == 0
     assert calls["images"] >= 1

@@ -69,6 +69,11 @@ class FaceSource:
             self._last = {}
             return self._last
         self._last = {category.category_name: category.score for category in result.face_blendshapes[0]}
+        # poziția nasului în cadru → legănarea capului (puppet.py)
+        if result.face_landmarks:
+            nose = result.face_landmarks[0][1]
+            self._last["poseX"] = max(-1.0, min(1.0, (nose.x - 0.5) * 2.4))
+            self._last["poseY"] = max(-1.0, min(1.0, (nose.y - 0.5) * 2.4))
         return self._last
 
     def close(self) -> None:

@@ -279,7 +279,12 @@ def run_overlay(cfg: dict, args) -> int:
 
     from PIL import ImageTk
 
-    composer = Composer(ASSETS, cfg)
+    if args.puppet:
+        from puppet import Puppet
+
+        composer = Puppet(ASSETS, int(cfg.get("canvas", {}).get("outputHeight", 720)), cfg.get("motion", {}))
+    else:
+        composer = Composer(ASSETS, cfg)
     director = Director(cfg)
 
     mic = None
@@ -356,6 +361,8 @@ def run_overlay(cfg: dict, args) -> int:
         now = time.monotonic()
         values = face.update() if face else {}
         level = mic.read() if mic else 0.0
+        if hasattr(composer, "set_inputs"):
+            composer.set_inputs(level, values, cfg.get("talk", {}).get("threshold", 0.05))
         changed = composer.set_asset(director.update(now, level, values), now)
         if changed or composer.animating:
             draw(composer.frame(now))
@@ -395,6 +402,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--y", type=int, default=60)
     parser.add_argument("--debug", action="store_true", help="scrie numele stării în colț")
     parser.add_argument("--calibrate", action="store_true", help="măsoară microfonul și sugerează pragul")
+    parser.add_argument("--puppet", action="store_true", help="ochi/gură pe straturi + legănare, nu poze întregi")
     args = parser.parse_args(argv)
 
     cfg = load_config(Path(args.config))

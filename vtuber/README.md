@@ -6,6 +6,7 @@ Ce e aici:
 | --- | --- |
 | `assets/` | **personajul tău**, 9 stări PNG 1024×1024 cu transparență (idle, blink, talking, talking_blink, laugh, love, sad, shocked, sus) |
 | `pngtuber.py` | **overlay-ul propriu-zis**: arată personajul în OBS și îl schimbă automat după voce și după față |
+| `puppet.py` | **păpușa**: ochi și gură ca straturi separate, capul se leagănă după față |
 | `states.izentric.json` | stările, pragurile, timpii de reacție, animația de balans |
 | `facesource.py` | citirea expresiilor din cameră (MediaPipe → `jawOpen`, `mouthSmile`, `browInnerUp`) |
 | `ASSETS.md` | ce am măsurat în pozele tale și ce lipsește ca să devină model Live2D |
@@ -18,7 +19,7 @@ Ce e aici:
 | `doctor.py` | verifică tot lanțul într-o comandă: model, tracker, expresii, reguli, monitor |
 | `CHARACTER.md` | specificațiile caracterului (straturi, parametri, expresii, pachetul de reacții) pentru rigger |
 | `reactions.dog.json` | pachetul de reacții `laugh / panic / bruh / angry`, gata de copiat în `reactions.json` la modelul nou |
-| `test_pngtuber.py` | 11 teste pe motorul de stări și pe compunerea cadrelor (fade, punch, balans) |
+| `test_pngtuber.py`, `test_puppet.py` | 22 teste pe motorul de stări, pe compunerea cadrelor și pe straturile păpușii |
 | `test_vts_bridge.py`, `test_face_reactions.py`, `test_model_tool.py`, `test_doctor.py` | 25 teste, rulate pe un server VTube Studio fals și pe modele de test |
 | `models/` | modelele descărcate local (ignorat de git) |
 
@@ -31,6 +32,7 @@ pip install -r vtuber/requirements.txt
 python vtuber/pngtuber.py --check          # verifică pozele și configul (1 secundă)
 python vtuber/pngtuber.py --calibrate      # o dată: cât de tare trebuie să vorbești ca să pornească `talking`
 python vtuber/pngtuber.py --mic --face     # pornește avatarul
+python vtuber/pngtuber.py --mic --face --puppet   # varianta cu ochi/gură pe straturi
 ```
 
 Ce face singur:
@@ -47,6 +49,21 @@ Ce face singur:
 Taste (fereastra trebuie să aibă focus): `1` laugh, `2` love, `3` sad, `4` shocked, `5` sus, `0` idle. `Esc` închide. Poziția se salvează în `vtuber/overlay.json`; o muți trăgând de imagine.
 
 Tranzițiile nu sunt tăieturi: 90 ms de fade, un „punch” de 3% la reacții și un balans de ±3 px la respirație — exact lucrurile care fac diferența între „poze comutate” și avatar viu.
+
+### Modul păpușă (`--puppet`) — gura și ochii se mișcă separat
+
+```
+python vtuber/pngtuber.py --mic --face --puppet
+```
+
+Pozele tale conțin, fără să fi fost gândite așa, trei straturi: `idle` e baza, `blink` diferă de ea **doar în zona ochilor** (3,7% din cadru), iar `talking` **doar în zona gurii** (1,5%). `puppet.py` extrage diferențele ca măști cu margini estompate și le compune peste bază, deci:
+
+- gura se deschide și se închide cu vocea (nivel RMS SAU `jawOpen`), nu comută imagini întregi;
+- pleoapele coboară pe `eyeBlink` din cameră, independent de poziția gurii — poți clipi cu gura deschisă fără o poză dedicată;
+- capul se înclină ±3° după poziția feței în cameră, în timp ce corpul stă pe loc (`swayDegrees` în config);
+- reacțiile (`laugh`, `shocked`, `sad`, `sus`, `love`) rămân imagini întregi — sunt desene separate, nu se pot descompune.
+
+Reconstrucția e verificată automat: `idle` + gura din `talking` + pleoapele din `blink` trebuie să dea `talking_blink` (diferență 1,7% din pixeli, adică exact cât diferă desenul original).
 
 ### OBS
 
