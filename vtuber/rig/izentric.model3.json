@@ -5,6 +5,7 @@
     "Textures": [
       "texture_00.png"
     ],
+    "Physics": "izentric.physics3.json",
     "DisplayInfo": "izentric.cdi3.json",
     "Expressions": [
       {
