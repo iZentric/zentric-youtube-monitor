@@ -4,3 +4,6 @@ vtuber/state.json
 __pycache__/
 .pytest_cache/
 vtuber/overlay.json
+vtuber/ref/
+Dinosaur.zip
+ellot.zip
