@@ -44,3 +44,37 @@ valoarea implicită (1) și coarnele apar la loc. Zero plugin-uri, zero cod.
   maximă (±11 px) nu apare nici gol, nici piele (test automat + randare la 9 poziții).
 - **Bleeding între tile-uri în atlas** — fiecare tile are acum 2 px de bordură care repetă
   marginea, altfel bilingărul lua pixeli din stratul vecin (halou colorat pe contur).
+
+## Ochii — ce era stricat și ce s-a măsurat (`vtuber/diagnostic_ochi.py`)
+
+Diagnosticul rulează 7 verificări; fiecare are un număr, nu o impresie:
+
+1. repausul = desenul tău (diferență maximă pe canal, pixeli peste prag);
+2. globul nu înghite geana și nu acoperă piele;
+3. irisul desenat e în întregime în glob;
+4. clipitul acoperă complet ochiul deschis („fără ochi sub ochi");
+5. privirea la maxim (±1) nu lasă gol și nu descoperă iris-fantomă;
+6. fiecare UV stă în interiorul tile-ului din atlas, cu bordură;
+7. randarea din `.moc3` față de desen, doar în zona ochilor.
+
+Trei defecte găsite și reparate:
+
+- **iris-fantomă**: `head` păstra irisul desenat sub glob, deci la privire rămânea pe loc.
+  Acum irisul din cap se înlocuiește cu albul local al ochiului (mediana sclerai din
+  deschidere), cu 2 px de siguranță pe contur, dar niciodată în afara globului.
+- **globul nu conținea tot irisul** (118 px pe ochiul stâng, 15 px pe drept): rămânea o
+  verigă de iris în cap. Globul = deschiderea desenată ∪ irisul desenat, minus piele.
+- **marginea de strat la clipit și la vorbit**: `Image.paste(state, (0,0), mask)`
+  premultipliază culoarea (canalul RGB se înmulțește cu alfa), așa că la compunere marginea
+  ieșea ca un contur închis în jurul pleoapelor. Se compune acum cu `alpha_composite`.
+
+## Reacții (specificația „VTuber dinamic")
+
+`vtuber/reactii.py`: tag-ul din replică (`[anger]`) iese din text înainte de TTS și devine:
+- `ExpressionActivationRequest` cu `izentric.<stare>.exp3.json` (fără hotkey, cu fade), și
+- `InjectParameterDataRequest` cu unghiurile capului (`mode = "set"`), ținute `hold` secunde,
+  apoi revenire la repaus.
+
+Unghiurile stau în intervalele modelului: cap ±30/±30/±30, corp ±10, ochi ±1. Cinci stări
+cerute (neutral, smirk, anger, shock, hype) + sad + love, cu aliasuri (`angry`, `rage`,
+`surprised`, `excited`, `sarcasm`). Rulare: `python vtuber/reactii.py "Ce naiba ai zis?! [anger]"`.

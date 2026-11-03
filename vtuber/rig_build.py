@@ -414,6 +414,7 @@ def build_layers(
     bright = (pixels[..., :3].astype(np.float32).mean(axis=2) > 200) & ~(zones["L"] | zones["R"])
     sclera = np.median(pixels[..., :3][bright].reshape(-1, 3), axis=0)
     layers: dict[str, Image.Image] = {"head": head, "body": body}
+    eye_fill: dict[str, np.ndarray] = {}      # zona din cap înlocuită cu scleră
     backing = backplate(body, head, source)
     if backing is not None:
         layers["backing"] = backing
@@ -438,16 +439,25 @@ def build_layers(
         eyeball[interior] = pixels[interior]
         eyeball[interior, 3] = 255
         layers[f"eye_{side}"] = Image.fromarray(eyeball, "RGBA")
+        eye_fill[side] = interior
 
         # Sub glob, în `head`, irisul desenat NU are ce căuta: când globul alunecă (±11 px)
         # rămânea pe loc un iris-fantomă — exact „ochi sub ochi". Se înlocuiește cu scleră
         # reconstruită prin difuzie (aceeași funcție ca la albul din jurul irisului), deci
         # ce se descoperă la mișcare e alb cu umbra desenului, nu un iris.
-        white_eye = eye_white(pixels, interior, grow=2)
-        eye_area = interior
+        # Irisul se înlocuiește cu albul local al ochiului (mediana sclerai din deschidere),
+        # nu cu o difuzie: difuzia lăsa o pată gri-albăstruie, adică un iris-fantomă difuz.
+        lum_i = pixels[..., :3].astype(np.float32).mean(axis=2)
+        sat_i = pixels[..., :3].astype(np.int16)
+        sat_i = sat_i.max(axis=2) - sat_i.min(axis=2)
+        inside = interior
+        white_only = inside & ~blob & (lum_i > 200) & (sat_i < 60)
+        alb = (np.median(pixels[white_only][:, :3].reshape(-1, 3), axis=0)
+               if white_only.sum() > 50 else np.array([250, 250, 252]))
         filled = head_pixels.copy()
-        filled[eye_area] = white_eye[eye_area]
-        filled[eye_area, 3] = 255
+        # +2 px: conturul anti-aliased al irisului rămânea ca o linie punctată roșie
+        # ...dar niciodată în afara globului: altfel albul iese pe marginea ochiului la repaus
+        filled[_dilate(inside & blob, 2) & inside] = np.append(alb, 255).astype(filled.dtype)
         head_pixels = filled
         layers["head"] = Image.fromarray(np.clip(head_pixels, 0, 255).astype(np.uint8), "RGBA")
 
@@ -466,11 +476,16 @@ def build_layers(
     eye_area = np.zeros(pixels.shape[:2], dtype=bool)
     for side in ("L", "R"):
         eye_area |= np.asarray(Image.fromarray(ellipses[side].astype(np.uint8) * 255, "L")
-                               .filter(ImageFilter.MaxFilter(21))) > 0
-    eye_zone = _dilate(np.asarray(difference_mask(source, blink)) > 40, 7) & eye_area
+                               .filter(ImageFilter.MaxFilter(3))) > 0
+    # zona pleoapelor: diferența reală + toată zona din cap care a fost înlocuită cu scleră
+    # (altfel albul reconstruit de sub glob rămâne descoperit pe lângă ochiul închis = inel)
+    # `eye_area` limitează doar diferența (zgomot pe siluetă); zona înlocuită cu scleră
+    # din cap trebuie acoperită integral, altfel rămâne un inel de scleră pe lângă pleoapă
+    eye_zone = ((np.asarray(difference_mask(source, blink)) > 30) & eye_area) \
+        | eye_fill["L"] | eye_fill["R"]
     mouth_area = np.zeros(pixels.shape[:2], dtype=bool)
     mouth_area[430:640, 380:660] = True
-    mouth_zone = _dilate(np.asarray(difference_mask(source, talking)) > 40, 7) & mouth_area
+    mouth_zone = (np.asarray(difference_mask(source, talking)) > 30) & mouth_area
     layers["eyes_closed"] = _patch(blink, eye_zone)
     layers["mouth_open"] = _patch(talking, mouth_zone)
 
@@ -574,9 +589,18 @@ def _patch(state: Image.Image, mask) -> Image.Image:
         mask = np.asarray(mask) > 40
     # marginea aproape tare: un blur de 1 px „trăgea" genele negre în afara petecului
     # și desena un inel gri în jurul ochiului închis
-    hard = Image.fromarray((mask * 255).astype(np.uint8), "L")
+    # miez tare (acoperă complet ce e dedesubt) + rampa de 5 px pe marginea exterioară:
+    # fără rampă, conturul petecului se vede ca o margine de strat pe obraz
+    core = _erode(mask, 2)
+    ramp = Image.fromarray((core * 255).astype(np.uint8), "L").filter(ImageFilter.GaussianBlur(1.2))
+    ramp = ramp.point(lambda v: min(255, round(v * 1.6)))
+    # ATENȚIE: `Image.paste(state, (0,0), ramp)` premultipliază culoarea (canalul de culoare
+    # se înmulțește cu alfa), iar la compunere marginea iese neagră — se vede ca un contur
+    # în jurul pleoapelor. `alpha_composite` face matematica corectă.
+    source = state.copy()
+    source.putalpha(ImageChops.multiply(state.getchannel("A"), ramp))
     layer = Image.new("RGBA", state.size, (0, 0, 0, 0))
-    layer.paste(state, (0, 0), hard)
+    layer.alpha_composite(source)
     return layer
 
 
