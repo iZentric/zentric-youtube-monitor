@@ -126,3 +126,16 @@ def test_no_gap_at_the_collar_when_the_head_rotates():
         alpha = np.asarray(frame)[..., 3]
         band = alpha[640:760, 300:730]
         assert (band < 8).sum() <= 5, f"gol de {int((band < 8).sum())} pixeli la rotire {angle}°"
+
+
+def test_pack_contains_everything_needed_to_rig():
+    """Un singur fișier de descărcat: dacă lipsește ceva din el, omul se blochează."""
+    import zipfile
+
+    pack = rig_build.write_pack(OUT)
+    with zipfile.ZipFile(pack) as archive:
+        names = set(archive.namelist())
+        assert names == set(rig_build.PACK_FILES)
+        assert archive.read("izentric.psd")[:4] == b"8BPS"      # antet PSD valid
+        guide = archive.read("GATA-DE-RIGAT.txt").decode("utf-8")
+        assert "izentric.psd" in guide and "moc3" in guide

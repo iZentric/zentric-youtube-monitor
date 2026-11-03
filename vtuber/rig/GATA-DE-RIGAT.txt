@@ -1,0 +1,39 @@
+GATA DE RIGAT — iZentric
+========================
+
+Ce ai in arhiva:
+  izentric.psd           - personajul tau, taiat in 8 bucati, pe straturi
+  izentric.rigspec.json  - lista cu ce sa misti (valorile sunt deja calculate)
+  izentric.model3.json   - fisierul care spune VTube Studio ce sa incarce
+  izentric.cdi3.json     - numele parametrilor (ochi, gura, cap)
+
+Ce iti trebuie:
+  1. Ayatsuri2D  (gratis, fara cont)  ->  ayatsuri-2d.org
+  2. VTube Studio (gratis, pe Steam)  ->  doar la final
+
+PASII, IN ORDINE:
+
+1. Instaleaza Ayatsuri2D.
+2. Deschide-l. File > Import PSD...  alege izentric.psd
+   -> fiecare strat apare ca o bucata. Nu muta nimic, e aliniat deja.
+3. Deschide izentric.rigspec.json cu Notepad, langa el.
+   Acolo scrie, pe scurt:
+     - faci 2 "warp deformer" si 1 "rotation deformer"
+     - legi capul de ParamAngleX / ParamAngleY / ParamAngleZ
+     - legi ochii de ParamEyeLOpen / ParamEyeROpen (opacitate 0 -> 100)
+     - legi irisele de ParamEyeBallX / ParamEyeBallY si le pui clipping pe
+       eye_mask_L si eye_mask_R (altfel ies din ochi)
+     - legi gura de ParamMouthOpenY (opacitate 0 -> 100)
+4. Export  ->  moc3, versiunea 5.0, cu model3.json si texturile bifate.
+5. Verifica (optional, dar recomandat):  python vtuber/check_model.py <folderul exportat>
+6. Pune folderul in:
+   C:\Users\<numele tau>\AppData\LocalLow\DenchiSoft\VTubeStudio\Live2DModels\izentric\
+7. Deschide VTube Studio, alege modelul, ruleaza Auto-Setup daca il cere.
+
+DACA CEVA NU MERGE:
+  - daca irisele ies din ochi  -> lipseste clippingul (pasul 3)
+  - daca ochii nu clipesc     -> grupul EyeBlink nu e legat de ParamEyeLOpen/ROpen
+  - daca gura nu se miste     -> grupul LipSync nu e legat de ParamMouthOpenY
+  - daca modelul nu se incarca -> versiunea moc3 nu e 5.0, sau textura e peste 4096
+
+Timp: 20-40 de minute.

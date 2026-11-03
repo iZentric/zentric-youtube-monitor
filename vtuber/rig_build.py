@@ -426,6 +426,23 @@ def write_sidecars(directory: Path, texture: str = "texture_00.png") -> dict[str
     return written
 
 
+PACK_FILES = ("izentric.psd", "izentric.rigspec.json", "izentric.model3.json", "izentric.cdi3.json", "GATA-DE-RIGAT.txt")
+
+
+def write_pack(directory: Path = OUT, name: str = "izentric-pack.zip") -> Path:
+    """Un singur fișier de descărcat: PSD + specificație + JSON-uri + ghidul de rigat."""
+    import zipfile
+
+    directory = Path(directory)
+    target = directory / name
+    with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as archive:
+        for member in PACK_FILES:
+            path = directory / member
+            if path.exists():
+                archive.write(path, member)
+    return target
+
+
 def parse_iris_arguments(values: list[str]) -> dict[str, tuple[int, int, int]]:
     """`--iris L:410,427,52 --iris R:607,424,52`"""
     circles = dict(IRIS_CIRCLES)
@@ -454,7 +471,8 @@ def main(argv: list[str] | None = None) -> int:
         image.save(OUT / f"{name}.png")
     write_psd(OUT / "izentric.psd", layers)
     write_sidecars(OUT)
-    print(f"scrise {len(layers)} straturi + PSD + model3/cdi3/rigspec în {OUT}")
+    write_pack(OUT)
+    print(f"scrise {len(layers)} straturi + PSD + model3/cdi3/rigspec + izentric-pack.zip în {OUT}")
     return 0
 
 
