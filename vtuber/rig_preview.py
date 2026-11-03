@@ -23,7 +23,7 @@ HERE = Path(__file__).parent
 RIG = HERE / "rig"
 ASSETS = HERE / "assets"
 
-LAYER_FILES = ("head", "body", "iris_L", "iris_R", "eyes_closed", "mouth_open", "eye_mask_L", "eye_mask_R")
+LAYER_FILES = ("backing", "head", "body", "iris_L", "iris_R", "eyes_closed", "mouth_open", "eye_mask_L", "eye_mask_R")
 
 # valorile din rigspec
 PIVOT = (512, 655)
@@ -53,6 +53,30 @@ def _shift(image: Image.Image, dx: float, dy: float) -> Image.Image:
     canvas = Image.new("RGBA", image.size, (0, 0, 0, 0))
     canvas.alpha_composite(image, (round(dx), round(dy)))
     return canvas
+
+
+def _shear(image: Image.Image, amount: float) -> Image.Image:
+    """Împinge corpul lateral, din ce în ce mai mult spre talie — ca un warp, nu ca o rotire.
+
+    La guler deplasarea e zero, deci gulerul rămâne lipit de gât oricât s-ar înclina corpul.
+    """
+    import numpy as np
+
+    if abs(amount) < 0.01:
+        return image
+    pixels = np.asarray(image)
+    height, width = pixels.shape[:2]
+    out = np.zeros_like(pixels)
+    for y in range(height):
+        ratio = max(0.0, (y - PIVOT[1]) / (height - PIVOT[1]))
+        dx = int(round(amount * ratio))
+        if dx == 0:
+            out[y] = pixels[y]
+        elif dx > 0:
+            out[y, dx:] = pixels[y, : width - dx]
+        else:
+            out[y, : width + dx] = pixels[y, -dx:]
+    return Image.fromarray(out)
 
 
 def _clip(layer: Image.Image, mask: Image.Image) -> Image.Image:
@@ -96,11 +120,10 @@ def render(layers: dict[str, Image.Image], angle_x: float = 0.0, angle_y: float 
     moved = face.rotate(-degrees, resample=Image.BICUBIC, center=PIVOT)
     moved = _shift(moved, angle_x * HEAD_PX_PER_DEGREE_X, angle_y * HEAD_PX_PER_DEGREE_Y)
 
-    body = layers["body"]
-    if abs(angle_x) > 0.01:
-        body = body.rotate(-angle_x * 0.15, resample=Image.BICUBIC, center=(512, 1024))
+    body = _shear(layers["body"], angle_x * 0.55)   # warp de corp: 0 la guler, maxim jos
 
-    frame = moved.copy()
+    frame = layers["backing"].copy()     # spatele gulerului: ce se vede prin deschizătură
+    frame.alpha_composite(moved)
     frame.alpha_composite(body)          # corpul stă deasupra: gulerul acoperă cusătura
     return frame
 

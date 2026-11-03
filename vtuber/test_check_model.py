@@ -117,7 +117,8 @@ def test_cdi3_uses_the_standard_parameter_ids_and_groups():
 
 def test_rig_spec_only_mentions_existing_layers_and_parameters():
     spec = rig_build.rig_spec()
-    layers = {"head", "body", "iris_L", "iris_R", "eyes_closed", "mouth_open", "eye_mask_L", "eye_mask_R"}
+    layers = {"backing", "head", "body", "iris_L", "iris_R", "eyes_closed", "mouth_open",
+              "eye_mask_L", "eye_mask_R"}
     parameters = {entry["Id"] for entry in rig_build.cdi3()["Parameters"]}
     deformers = {entry["id"] for entry in spec["deformers"]}
 

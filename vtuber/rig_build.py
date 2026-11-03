@@ -26,7 +26,7 @@ ASSETS = HERE / "assets"
 OUT = HERE / "rig"
 
 CUT_Y = 655          # linia gulerului, măsurată pe idle.png
-HEAD_BLEED = 60      # cât coboară gâtul sub linia gulerului (gâtul se termină la ~y 700)
+HEAD_BLEED = 100     # cât coboară gâtul sub linia gulerului (gâtul se termină la ~y 700)
 BODY_BLEED = 20      # cât urcă trupul sub cap
 IRIS_FEATHER = 0  # margine tare: whitening-ul din cap acoperă exact discul, deci reconstrucția e la pixel
 
@@ -148,11 +148,19 @@ def build_layers(
     head_pixels = np.zeros_like(pixels)
     head_pixels[:CUT_Y] = pixels[:CUT_Y]
     band = slice(CUT_Y, min(height, CUT_Y + HEAD_BLEED))
-    # gâtul se lățește cu 6 px în banda de sub guler: gulerul îl acoperă, dar la rotire
-    # nu mai rămâne nici un gol între gât și guler
-    wider = Image.fromarray((skin[band] * 255).astype(np.uint8), "L").filter(ImageFilter.MaxFilter(13))
+    # Gâtul se lățește și coboară adânc sub guler, vopsit în culoarea pielii. Gulerul
+    # (stratul de trup, desenat deasupra) îl acoperă, deci nu se vede; dar la rotație
+    # maximă gâtul umple toată deschizătura și nu mai rămâne nici un pixel de fundal.
+    wider = Image.fromarray((skin[band] * 255).astype(np.uint8), "L").filter(ImageFilter.MaxFilter(41))
     keep = np.asarray(wider) > 40
-    head_pixels[band] = np.where(keep[..., None], pixels[band], 0)
+    tone = skin_tone(pixels, skin, CUT_Y)
+    rows = np.arange(band.start, band.stop)[:, None]
+    depth = np.clip((rows - CUT_Y) / max(1, HEAD_BLEED), 0.0, 1.0)
+    shade = 1.0 - 0.22 * depth                                   # se închide spre interior
+    fill = (tone[None, None, :] * shade[:, :, None]).astype(np.uint8)
+    fill = np.concatenate([fill, np.full(fill.shape[:2] + (1,), 255, dtype=np.uint8)], axis=2)
+    slab = np.where(keep[..., None], fill, head_pixels[band])
+    head_pixels[band] = slab
     head = Image.fromarray(head_pixels, "RGBA")
 
     # trupul: tot ce e sub guler, fără piele — altfel gâtul ar sta pe loc când capul se rotește
@@ -163,6 +171,9 @@ def build_layers(
 
     eye_masks = eye_mask_masks(source.size, circles)
     layers: dict[str, Image.Image] = {"head": head, "body": body}
+    backing = backplate(body, head)
+    if backing is not None:
+        layers["backing"] = backing
     for side, mask in eye_masks.items():
         layer = np.zeros_like(pixels)
         layer[mask] = [255, 255, 255, 255]
@@ -187,6 +198,44 @@ def build_layers(
     return layers
 
 
+def skin_tone(pixels: np.ndarray, skin: np.ndarray, cut: int) -> np.ndarray:
+    """Culoarea medie a pielii din jurul gulerului, folosită la prelungirea gâtului."""
+    window = skin[max(0, cut - 60):cut + 20]
+    colors = pixels[max(0, cut - 60):cut + 20][window][:, :3]
+    if len(colors) == 0:
+        return np.array([235, 190, 170], dtype=np.float32)
+    return colors.reshape(-1, 3).mean(axis=0)
+
+
+def backplate(body: Image.Image, head: Image.Image, top: int = CUT_Y - 40) -> Image.Image | None:
+    """Spatele gulerului: ce se vede prin deschizătura husei când capul se mișcă.
+
+    Se ia silueta comună (trup + cap), se umplu golurile închise, iar zona care e
+    acoperită de cap dar nu și de trup (gâtul din deschizătură) primește culoarea
+    estompată a desenului. Stratul stă sub cap, deci nu se vede cât timp capul e pe
+    poziție — dar acoperă orice firicel de fundal la rotație maximă.
+    """
+    from PIL import ImageDraw
+
+    union = np.maximum(np.asarray(body.getchannel("A")), np.asarray(head.getchannel("A")))
+    solid = Image.fromarray(((union > 24) * 255).astype(np.uint8), "L")
+    filled = solid.copy()          # `.copy()` obligatoriu: pe buffer partajat floodfill nu face nimic
+    ImageDraw.floodfill(filled, (0, 0), 128)
+    holes = np.asarray(filled) == 0
+    solid_arr = np.asarray(solid) > 0
+    area = (solid_arr | holes) & ~(np.asarray(body.getchannel("A")) > 24)
+    area[:top] = False
+    if not area.any():
+        return None
+    # fără dilatație: stratul rămâne în interiorul siluetei, altfel ar ieși ca un halou
+    widened = area & (np.asarray(filled) == 255)
+    softened = np.asarray(body.filter(ImageFilter.GaussianBlur(22)))
+    out = np.zeros((solid_arr.shape[0], solid_arr.shape[1], 4), dtype=np.uint8)
+    out[widened, :3] = softened[widened, :3]
+    out[widened, 3] = 255
+    return Image.fromarray(out, "RGBA")
+
+
 def _patch(state: Image.Image, mask: Image.Image) -> Image.Image:
     """Doar zona care diferă, pe canvas complet (restul transparent)."""
     layer = Image.new("RGBA", state.size, (0, 0, 0, 0))
@@ -203,16 +252,18 @@ def composite(layers: dict[str, Image.Image], order: list[str] | None = None) ->
     return frame
 
 
-# gulerul (trup) stă DEASUPRA gâtului, deci cusătura nu se vede când capul se rotește
-DRAW_ORDER = ["eyes_closed", "mouth_open", "iris_L", "iris_R", "eye_mask_L", "eye_mask_R", "body", "head"]
-COMPOSITE_ORDER = ["body", "head", "iris_L", "iris_R"]
-
+# Stiva se scrie de la fund în sus (Pytoshop o inversează la scriere), iar DRAW_ORDER se
+# DERIVĂ din ea: așa nu pot diverge niciodată ordinea din PSD și cea în care se desenează.
+# Gulerul (trup) stă DEASUPRA gâtului, deci cusătura nu se vede când capul se rotește.
 GROUPS = [
-    ("FACE", True, ["eyes_closed", "mouth_open", "iris_L", "iris_R"]),
-    ("MASKS", False, ["eye_mask_L", "eye_mask_R"]),
-    ("BODY", True, ["body"]),
+    ("BACKING", True, ["backing"]),
     ("HEAD", True, ["head"]),
+    ("BODY", True, ["body"]),
+    ("MASKS", False, ["eye_mask_R", "eye_mask_L"]),
+    ("FACE", True, ["iris_R", "iris_L", "mouth_open", "eyes_closed"]),
 ]
+DRAW_ORDER = [name for _, _, members in reversed(GROUPS) for name in reversed(members)]
+COMPOSITE_ORDER = ["backing", "head", "iris_L", "iris_R", "body"]
 HIDDEN_BY_DEFAULT = {"eyes_closed", "mouth_open"}
 CLIPPING = {"iris_L": "eye_mask_L", "iris_R": "eye_mask_R"}
 

@@ -96,9 +96,11 @@ def test_psd_round_trip_keeps_the_layers():
     path = rig_build.write_psd(OUT / "izentric.psd", layers)
     psd = PSDImage.open(path)
     names = [layer.name.strip("\x00") for layer in flatten(psd)]
-    assert sorted(names) == sorted(rig_build.DRAW_ORDER)
+    # ordinea din PSD (sus -> jos) trebuie să fie exact cea în care se desenează,
+    # altfel gulerul nu mai acoperă gâtul când PSD-ul e importat în editor
+    assert names == rig_build.DRAW_ORDER
     groups = [layer.name.strip("\x00") for layer in psd if layer.is_group()]
-    assert groups == ["HEAD", "BODY", "MASKS", "FACE"]
+    assert groups == ["FACE", "MASKS", "BODY", "HEAD", "BACKING"]   # sus -> jos
 
     rebuilt = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
     for layer in reversed(list(flatten(psd, visible_only=True))):
@@ -139,3 +141,31 @@ def test_pack_contains_everything_needed_to_rig():
         assert archive.read("izentric.psd")[:4] == b"8BPS"      # antet PSD valid
         guide = archive.read("GATA-DE-RIGAT.txt").decode("utf-8")
         assert "izentric.psd" in guide and "moc3" in guide
+
+
+def test_backing_layer_is_inside_the_silhouette_and_fills_the_hood_opening():
+    """Spatele gulerului nu are voie să iasă în afara personajului (halou), dar trebuie
+    să acopere deschizătura husei, altfel la rotație se vede fundalul."""
+    import numpy as np
+
+    layers = rig_build.build_layers()
+    backing = np.asarray(layers["backing"].getchannel("A")) > 24
+    body = np.asarray(layers["body"].getchannel("A")) > 24
+    head = np.asarray(layers["head"].getchannel("A")) > 24
+    assert backing.any(), "stratul de spate lipsește"
+    assert not (backing & ~(body | head)).any(), "spatele iese din siluetă"
+    assert backing.sum() > 2000, "spatele e gol"
+
+
+def test_neck_is_painted_skin_not_a_swatch_of_the_hoodie():
+    """Gâtul prelungit sub guler trebuie vopsit în culoarea pielii, nu copiat din husă."""
+    import numpy as np
+
+    layers = rig_build.build_layers()
+    head = np.asarray(layers["head"].convert("RGB")).astype(int)
+    alpha = np.asarray(layers["head"].getchannel("A")) > 200
+    band = alpha[700:740, 470:560]
+    colors = head[700:740, 470:560][band]
+    assert len(colors) > 500, "gâtul prelungit lipsește"
+    r, g, b = colors.mean(axis=0)
+    assert r > g > b and r - b > 25 and r > 150, f"gâtul nu e piele: {r:.0f},{g:.0f},{b:.0f}"

@@ -113,3 +113,35 @@ Verificat prin teste (`vtuber/test_rig_preview.py`, 7 teste):
 | gură deschisă | `assets/talking.png` | 4,29 |
 
 Irisul este testat la toate cele 9 poziții (±1, ±1) și nu iese din masca ochiului la niciuna.
+
+## Strat nou: BACKING (spatele gulerului)
+
+La rotație maximă, între gât și guler se vedea fundalul. Două reparacii, ambele măsurate:
+
+1. **gâtul coboară 100 px sub linia gulerului** și e vopsit în culoarea pielii (medie din
+   jurul gulerului, cu umbră spre interior). Gulerul, desenat deasupra, îl ascunde la repaus
+   și îl folosește ca umplutură la rotație.
+2. **stratul BACKING** umple deschizătura husei cu culoarea estompată a husei. E la fundul
+   stivei și nu iese niciodată în afara siluetei (testat).
+
+### Ordinea din PSD era inversată
+
+Până acum, în PSD grupul HEAD ajungea deasupra lui BODY — adică gulerul nu ar fi acoperit
+gâtul după importul în editor. Acum `DRAW_ORDER` se **derivă** din `GROUPS`, iar testul
+compară ordinea citită din PSD cu `DRAW_ORDER`, deci nu mai pot diverge.
+
+## Harness diferențial: 281 de cazuri
+
+`python vtuber/differential.py --cases 281` — fiecare caz e desenat și măsurat:
+
+| măsurătoare | limită | rezultat |
+|---|---|---|
+| găuri în siluetă (se vede dedesubt) | ≤ 164 (cât are arta de repaus) | **164** |
+| găuri în banda gulerului | 0 | **0** |
+| iris ieșit din masca ochiului | 0 | **0** |
+| variația ariei personajului | ≤ 2 % | **1,27 %** |
+| cazuri picate | 0 | **0 / 281** |
+
+Comparație cu modelele oficiale (`python vtuber/reference_diff.py`, Haru/Hiyori/Mao):
+**0 parametri inventați**, toate cele 16 ID-uri sunt standard; 170 de parametri standard
+lipsesc (brațe, păr, fizică, cele 5 vocale) — exact lucrurile care cer artă separată.

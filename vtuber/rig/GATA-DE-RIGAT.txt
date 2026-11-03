@@ -2,7 +2,7 @@ GATA DE RIGAT — iZentric
 ========================
 
 Ce ai in arhiva:
-  izentric.psd           - personajul tau, taiat in 8 bucati, pe straturi
+  izentric.psd           - personajul tau, taiat in 9 bucati, pe straturi
   izentric.rigspec.json  - lista cu ce sa misti (valorile sunt deja calculate)
   izentric.model3.json   - fisierul care spune VTube Studio ce sa incarce
   izentric.cdi3.json     - numele parametrilor (ochi, gura, cap)
@@ -24,11 +24,15 @@ PASII, IN ORDINE:
      - legi irisele de ParamEyeBallX / ParamEyeBallY si le pui clipping pe
        eye_mask_L si eye_mask_R (altfel ies din ochi)
      - legi gura de ParamMouthOpenY (opacitate 0 -> 100)
-4. Export  ->  moc3, versiunea 5.0, cu model3.json si texturile bifate.
-5. Verifica (optional, dar recomandat):  python vtuber/check_model.py <folderul exportat>
-6. Pune folderul in:
+4. NU schimba ordinea straturilor din PSD. Asa cum e, e corect:
+   FACE (ochi, gura, irise) / MASKS / BODY / HEAD / BACKING.
+   BODY sta DEASUPRA lui HEAD, ca gulerul sa acopere gatul cand capul se roteste.
+   BACKING e la fund: umple deschizatura husei, ca sa nu se vada fundalul.
+5. Export  ->  moc3, versiunea 5.0, cu model3.json si texturile bifate.
+6. Verifica (optional, dar recomandat):  python vtuber/check_model.py <folderul exportat>
+7. Pune folderul in:
    C:\Users\<numele tau>\AppData\LocalLow\DenchiSoft\VTubeStudio\Live2DModels\izentric\
-7. Deschide VTube Studio, alege modelul, ruleaza Auto-Setup daca il cere.
+8. Deschide VTube Studio, alege modelul, ruleaza Auto-Setup daca il cere.
 
 DACA CEVA NU MERGE:
   - daca irisele ies din ochi  -> lipseste clippingul (pasul 3)

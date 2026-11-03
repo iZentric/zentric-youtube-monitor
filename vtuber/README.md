@@ -24,7 +24,7 @@ Ce e aici:
 | `doctor.py` | verifică tot lanțul într-o comandă: model, tracker, expresii, reguli, monitor |
 | `CHARACTER.md` | specificațiile caracterului (straturi, parametri, expresii, pachetul de reacții) pentru rigger |
 | `reactions.dog.json` | pachetul de reacții `laugh / panic / bruh / angry`, gata de copiat în `reactions.json` la modelul nou |
-| `test_pngtuber.py`, `test_puppet.py`, `test_rig_build.py`, `test_check_model.py` | 42 teste: stări, cadre, straturi, schema modelului, validator |
+| `test_pngtuber.py`, `test_puppet.py`, `test_rig_build.py`, `test_check_model.py`, `test_rig_preview.py`, `test_differential.py` | 61 de teste: stări, cadre, straturi, ordinea din PSD, schema modelului, validator, previzualizare, harness diferențial |
 | `test_vts_bridge.py`, `test_face_reactions.py`, `test_model_tool.py`, `test_doctor.py` | 25 teste, rulate pe un server VTube Studio fals și pe modele de test |
 | `models/` | modelele descărcate local (ignorat de git) |
 
