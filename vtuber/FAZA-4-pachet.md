@@ -30,10 +30,14 @@ valoarea implicită (1) și coarnele apar la loc. Zero plugin-uri, zero cod.
 
 ## Ce am reparat la pachet în faza asta
 
-- **Banda roșie de sub coarne** — masca de culoare nu prindea umbra conturului (94, 5, 3).
-  Pragul e acum `r > 50 & r > g·1,6 & r > b·1,6 & g < 160 & a > 40`, iar umplerea părului
-  copiază pixelul de dedesubt și refuză orice culoare din familia coarnelor.
-  Rezultat: 0 pixeli roșii rămași în `head` (măsurat), `verificare-coarne.png`.
+- **Locul coarnelor rămânea gol** (se vedea fundalul prin păr). Acum:
+  1. masca prinde și umbra conturului (94, 5, 3), nu doar roșul aprins:
+     `r > 50 & r > g·1,6 & r > b·1,6 & g < 160 & a > 40`;
+  2. gaura se umple cu **potrivire de textură**: pentru fiecare corn se caută offset-ul
+     (pas 4 px) care seamănă cel mai bine pe inelul din jurul găurii, cu condiția ca sursa
+     să fie păr și să aibă luminozitate apropiată (nu se amestecă părul alb cu cel negru),
+     apoi bucata se copiază și cusătura se estompează pe 2 px.
+  Rezultat: 0 pixeli roșii rămași în `head`, `verificare-coarne.png`.
 - **Inelul alb din jurul ochilor** — stratul `eye_L/R` avea 14 px de alb vopsit în jurul
   desenului, ca să acopere alunecarea globului. Se vedea ca margine peste geană și obraz.
   Acum globul = exact desenul; în urmă rămâne albul reconstruit din `head`, deci la privirea

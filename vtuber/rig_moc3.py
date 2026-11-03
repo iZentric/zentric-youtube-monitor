@@ -103,13 +103,88 @@ def _grid(region, cols, rows):
     return verts, uvs, tris
 
 
-def split_horns(layers: dict[str, Image.Image]) -> dict[str, Image.Image]:
-    """Scoate coarnele într-un strat propriu și umple părul rămas dedesubt.
+def _patch_fill(base, fill):
+    """Umple o gaură din păr copiind bucata de păr cea mai potrivită din aceeași poză.
 
-    Umplerea ia doar pixelii de păr vecini (stânga/dreapta, altfel din rândul de jos),
-    pe fiecare segment continuu al coarnelor — nu peste tot rândul.
+    Se caută offset-ul (dy, dx) care seamănă cel mai bine pe inelul din jurul găurii, apoi
+    gaura se umple cu pixelii de la acel offset and the edge e estompat pe 2 px. E o
+    potrivire de textură simplă (PatchMatch cu un singur pas), suficientă pentru o zonă
+    de ~100 px — o umplere plată se vedea ca o pată.
     """
     import numpy as np
+
+    def dilate(mask, radius):
+        out = mask.copy()
+        for _ in range(radius):
+            grown = out.copy()
+            grown[1:, :] |= out[:-1, :]
+            grown[:-1, :] |= out[1:, :]
+            grown[:, 1:] |= out[:, :-1]
+            grown[:, :-1] |= out[:, 1:]
+            out = grown
+        return out
+
+    alpha = base[..., 3] > 60
+    ring = dilate(fill, 4) & ~dilate(fill, 1) & alpha
+    ys, xs = np.nonzero(ring)
+    if not len(ys):
+        return base
+    ring_rgb = base[ys, xs, :3].astype(np.float32)
+    ring_mean = float(ring_rgb.mean())
+
+    best = None
+    for dy in range(-260, 261, 4):
+        for dx in range(-260, 261, 4):
+            if abs(dy) < 30 and abs(dx) < 30:
+                continue
+            sy, sx = ys + dy, xs + dx
+            ok = (sy >= 0) & (sy < base.shape[0]) & (sx >= 0) & (sx < base.shape[1])
+            if ok.mean() < 0.9:
+                continue
+            cand = base[sy[ok], sx[ok], :3].astype(np.float32)
+            if (base[sy[ok], sx[ok], 3] < 60).any():
+                continue                      # sursa trebuie să fie păr, nu fundal
+            if abs(float(cand.mean()) - ring_mean) > 30:
+                continue                      # nu amestecăm părul alb cu cel negru
+            score = float(np.abs(cand - ring_rgb[ok]).mean())
+            if best is None or score < best[0]:
+                best = (score, dy, dx)
+    if best is None:
+        return base
+
+    _score, dy, dx = best
+    src_y = np.arange(base.shape[0])[:, None] + dy
+    src_x = np.arange(base.shape[1])[None, :] + dx
+    valid = (src_y >= 0) & (src_y < base.shape[0]) & (src_x >= 0) & (src_x < base.shape[1])
+    sy = np.clip(src_y, 0, base.shape[0] - 1)
+    sx = np.clip(src_x, 0, base.shape[1] - 1)
+    patch = base[sy, sx, :3]
+    patch_alpha = base[sy, sx, 3]
+    take = fill & valid & (patch_alpha > 60)
+    base[take, :3] = patch[take]
+    base[take, 3] = 255
+    # estompare pe 2 px la cusătură, ca să nu se vadă dreptunghiul copiat
+    from PIL import ImageFilter
+
+    rgb = base[..., :3].astype(np.float32)
+    soft = np.asarray(Image.fromarray(np.clip(rgb, 0, 255).astype(np.uint8), "RGB")
+                      .filter(ImageFilter.GaussianBlur(1.5))).astype(np.float32)
+    edge = take & ~dilate(~take, 0)          # pixeli de umplutură lipiți de margine
+    base[edge, :3] = soft[edge].astype(base.dtype)
+    return base
+
+
+def split_horns(layers: dict[str, Image.Image]) -> dict[str, Image.Image]:
+    """Scoate coarnele într-un strat propriu și repară părul rămas dedesubt.
+
+    Regula de umplere e geometrică, nu pe culoare: după ce scoatem coarnele, alpha-ul
+    capului are găuri. Umplem **doar găurile interioare** (componente transparente care nu
+    ating marginea pozei) — adică locurile unde coarnele erau peste păr. Porțiunile care
+    ieșeau pe fundal rămân transparente, altfel rămânea silueta coarnelor umplută cu păr.
+    Culoarea se copiază de la cel mai apropiat pixel opac din aceeași coloană.
+    """
+    import numpy as np
+    from PIL import ImageDraw
 
     head = np.array(layers["head"].convert("RGBA")).astype(np.int16)
     r, g, b, al = head[..., 0], head[..., 1], head[..., 2], head[..., 3]
@@ -128,41 +203,67 @@ def split_horns(layers: dict[str, Image.Image]) -> dict[str, Image.Image]:
     horns = np.zeros_like(head)
     horns[horn] = head[horn]
 
-    def redish(px):
-        """Culoare din familia coarnelor — nu are voie să servească drept sursă de umplere."""
-        return px[0] > 45 and px[0] > px[1] * 1.5 and px[0] > px[2] * 1.5
-
     base = head.copy()
+    base[horn] = 0
+
+    # găurile interioare din alpha (nu ating marginea pozei)
+    solid = Image.fromarray((base[..., 3] > 60).astype(np.uint8) * 255, "L").copy()
+    ImageDraw.floodfill(solid, (0, 0), 128)
+    pocket = np.asarray(solid) == 0
+    grown = horn.copy()
+    for _ in range(2):
+        g2 = grown.copy()
+        g2[1:, :] |= grown[:-1, :]
+        g2[:-1, :] |= grown[1:, :]
+        g2[:, 1:] |= grown[:, :-1]
+        g2[:, :-1] |= grown[:, 1:]
+        grown = g2
+    # Coarnele stau peste păr, deci locul lor trebuie reumplut cu păr. Dar vârfurile lor
+    # ies în fundal: ca să nu creăm o cocoașă de păr, umplem doar ce intră în silueta
+    # așteptată a părului (închidere morfologică = umple crăpăturile de sub horn).
+    def _grow(mask, radius):
+        out = mask.copy()
+        for _ in range(radius):
+            g = out.copy()
+            g[1:, :] |= out[:-1, :]
+            g[:-1, :] |= out[1:, :]
+            g[:, 1:] |= out[:, :-1]
+            g[:, :-1] |= out[:, 1:]
+            out = g
+        return out
+
+    def _shrink(mask, radius):
+        return ~_grow(~mask, radius)
+
+    hair = base[..., 3] > 60
+    closed = _shrink(_grow(hair, 18), 18)       # silueta fără crăpături
+    fill = horn.copy()      # tot locul coarnelor se reumple cu păr (vezi _patch_fill)
+
     height, width = horn.shape
-    for y in range(height - 1, -1, -1):
-        row = horn[y]
-        if not row.any():
-            continue
-        cols = row.nonzero()[0]
-        runs, start_x = [], cols[0]
-        for prev, cur in zip(cols, cols[1:]):
-            if cur != prev + 1:
-                runs.append((start_x, prev))
-                start_x = cur
-        runs.append((start_x, cols[-1]))
-        for x0, x1 in runs:
-            left = next((base[y, x] for x in range(x0 - 1, max(-1, x0 - 60), -1)
-                         if base[y, x, 3] > 100 and not redish(base[y, x])), None)
-            right = next((base[y, x] for x in range(x1 + 1, min(width, x1 + 60))
-                          if base[y, x, 3] > 100 and not redish(base[y, x])), None)
-            below = base[min(height - 1, y + 1)]
-            if left is None and right is None:
-                left = right = below[(x0 + x1) // 2]
-            left = left if left is not None else right
-            right = right if right is not None else left
-            span = x1 - x0 + 1
-            for i, x in enumerate(range(x0, x1 + 1)):
-                if below[x, 3] > 100 and not redish(below[x]):   # părul se continuă în sus
-                    base[y, x] = below[x]
-                    continue
-                t = 0.5 if span == 1 else i / (span - 1)
-                base[y, x] = (left * (1 - t) + right * t).astype(np.int16)
-                base[y, x, 3] = max(left[3], right[3])
+    if fill.any():
+        # fiecare corn separat: își alege offset-ul potrivit (unul stă pe păr negru,
+        # celălalt pe păr alb — altfel se copiază părul de pe partea cealaltă)
+        seen = np.zeros_like(fill)
+        for _ in range(2):
+            rest = fill & ~seen
+            if not rest.any():
+                break
+            ys, xs = np.nonzero(rest)
+            seed = (int(ys[0]), int(xs[0]))
+            comp = np.zeros_like(fill)
+            comp[seed] = True
+            while True:
+                grown = comp.copy()
+                grown[1:, :] |= comp[:-1, :]
+                grown[:-1, :] |= comp[1:, :]
+                grown[:, 1:] |= comp[:, :-1]
+                grown[:, :-1] |= comp[:, 1:]
+                grown &= fill
+                if (grown == comp).all():
+                    break
+                comp = grown
+            seen |= comp
+            base = _patch_fill(base, comp)
     out = dict(layers)
     out["head"] = Image.fromarray(np.clip(base, 0, 255).astype(np.uint8), "RGBA")
     out["horns"] = Image.fromarray(np.clip(horns, 0, 255).astype(np.uint8), "RGBA")
