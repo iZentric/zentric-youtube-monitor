@@ -96,3 +96,20 @@ Toate trei sunt în `ART-BRIEF.md`.
 ## Ce rămâne neverificat
 
 Ayatsuri2D, Umamo și VTube Studio nu rulează în sandbox (fără interfață grafică), deci **exportul moc3 și încărcarea în VTS nu au fost făcute de mine**. Verificat: PSD-ul se recitește corect (4 grupuri, 8 layere, variantele ascunse), compoziția vizibilă dă `idle.png` la pixel, schemele JSON sunt cele oficiale, iar validatorul trece pe un model real.
+
+## Previzualizare în mișcare
+
+`python vtuber/rig_preview.py` scrie `vtuber/rig/preview.gif`: 90 de cadre, 6 secunde,
+capul se uită stânga–dreapta (±22°), se înclină (±5°), clipește de două ori și vorbește.
+Mișcările folosesc exact valorile din `izentric.rigspec.json`, deci ce se vede în GIF este
+ce va face modelul după export.
+
+Verificat prin teste (`vtuber/test_rig_preview.py`, 7 teste):
+
+| cadru | referință | rms |
+|---|---|---|
+| repaus | `assets/idle.png` | **0,03** |
+| ochi închiși | `assets/blink.png` | 5,56 |
+| gură deschisă | `assets/talking.png` | 4,29 |
+
+Irisul este testat la toate cele 9 poziții (±1, ±1) și nu iese din masca ochiului la niciuna.
