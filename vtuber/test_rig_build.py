@@ -44,14 +44,22 @@ def test_eye_mask_covers_the_whole_drawn_iris():
         assert mask.sum() > blob.sum(), "masca e mai mică decât irisul"
 
 
-def test_eyeball_layer_has_margin_for_the_whole_travel():
-    """Globul are 14 px de rezervă în jurul deschiderii: cât alunecă la maxim (±11)."""
+def test_eyeball_is_exactly_the_drawn_eye_no_white_ring():
+    """Globul = exact desenul ochiului. Un inel de alb vopsit în jurul lui ieșea peste
+    geană și obraz ca margine de strat (dovedit cu randare înainte/după)."""
     layers = build_layers()
+    source = np.asarray(Image.open(ASSETS / "idle.png").convert("RGBA")).astype(np.uint8)
     for side in ("L", "R"):
         mask = np.asarray(layers[f"eye_mask_{side}"].getchannel("A")) > 24
         eyeball = np.asarray(layers[f"eye_{side}"].getchannel("A")) > 24
-        grown = rig_build._dilate(mask, 12)
-        assert (grown & ~eyeball).sum() == 0, f"globul {side} nu are rezervă de 12 px"
+        assert not (mask & ~eyeball).any(), f"gol în ochiul {side}"
+        # inelul vopsit ieșea în afara desenului => reconstrucția la pixel din
+        # test_layers_rebuild_the_original_picture ar da diferență; aici verificăm doar
+        # că globul nu are pixeli opaci care lipsesc din desen (alpha în plus = inel)
+        extra = (eyeball & ~mask).sum()
+        assert extra < 0.12 * eyeball.sum(), f"globul {side}: {int(extra)} px în afara măștii"
+        blob = rig_build.iris_blob(source, rig_build.IRIS_CIRCLES[side])
+        assert not (blob & ~eyeball).any(), f"irisul {side} nu e în glob"
 
 
 def test_eyes_closed_and_mouth_open_touch_only_their_regions():

@@ -441,9 +441,10 @@ def build_layers(
         # se mută), ci se prelungește albul ochiului — se vede ca scleră, nu ca o dungă.
         eyeball = np.zeros_like(pixels)
         eyeball[interior] = pixels[interior]
-        margin = _dilate(interior, 14) & ~interior
-        eyeball[margin] = [int(v) for v in sclera] + [255]
-        eyeball[interior | margin, 3] = 255
+        # Fără inel de siguranță: orice alb vopsit în afara desenului ieșea ca margine
+        # peste geană. În urmă rămâne albul reconstruit din `head`, deci alunecarea nu
+        # descoperă nimic (verificat pe ±11 px).
+        eyeball[interior, 3] = 255
         layers[f"eye_{side}"] = Image.fromarray(eyeball, "RGBA")
 
     # pleoapele închise: diferența dintre blink și idle

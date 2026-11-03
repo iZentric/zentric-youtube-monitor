@@ -8,6 +8,7 @@ Ieșire: `rig/izentric.moc3`, texturile, `model3/cdi3/physics3/exp3`, `vtube.jso
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -33,19 +34,19 @@ PARAMS = [
     ("ParamEyeLOpen", 0, 1, 1), ("ParamEyeROpen", 0, 1, 1),
     ("ParamEyeBallX", -1, 1, 0), ("ParamEyeBallY", -1, 1, 0),
     ("ParamMouthOpenY", 0, 1, 0), ("ParamBreath", 0, 1, 0),
-    ("ParamHairSwayX", -1, 1, 0),
+    ("ParamHairSwayX", -1, 1, 0), ("ParamHornsVis", 0, 1, 1),
     ("ParamExprLaugh", 0, 1, 0), ("ParamExprLove", 0, 1, 0), ("ParamExprSad", 0, 1, 0),
     ("ParamExprShocked", 0, 1, 0), ("ParamExprSus", 0, 1, 0),
 ]
 P = {name: i for i, (name, *_rest) in enumerate(PARAMS)}
 
 # ordinea de desenare: de la spate spre față
-DRAW = ["backing", "body", "head", "eye_L", "eye_R",
+DRAW = ["backing", "body", "head", "horns", "eye_L", "eye_R",
         "expr_laugh", "expr_love", "expr_sad", "expr_shocked", "expr_sus",
         "mouth_open", "eyes_closed"]
 # numele din .moc3: zonele de click trebuie să aibă exact ID-ul din HitAreas
 MESH_ID = {"head": "HitAreaHead", "body": "HitAreaBody"}
-GRID = {"head": 10, "body": 8, "eye_L": 6, "eye_R": 6, "eye_mask_L": 4, "eye_mask_R": 4,
+GRID = {"horns": 6, "head": 10, "body": 8, "eye_L": 6, "eye_R": 6, "eye_mask_L": 4, "eye_mask_R": 4,
         "eyes_closed": 7, "mouth_open": 5, "backing": 4,
         "expr_laugh": 7, "expr_love": 7, "expr_sad": 7, "expr_shocked": 7, "expr_sus": 7}
 
@@ -54,14 +55,14 @@ KEYS = {
     "ParamAngleX": [-30.0, 0.0, 30.0], "ParamAngleY": [-30.0, 0.0, 30.0],
     "ParamAngleZ": [-30.0, 0.0, 30.0], "ParamBodyAngleX": [-10.0, 0.0, 10.0],
     "ParamEyeBallX": [-1.0, 0.0, 1.0], "ParamEyeBallY": [-1.0, 0.0, 1.0],
-    "ParamHairSwayX": [-1.0, 0.0, 1.0], "ParamBreath": [0.0, 1.0],
+    "ParamHairSwayX": [-1.0, 0.0, 1.0], "ParamHornsVis": [0.0, 1.0], "ParamBreath": [0.0, 1.0],
     "ParamEyeLOpen": [1.0, 0.0], "ParamEyeROpen": [1.0, 0.0],
     "ParamMouthOpenY": [0.0, 1.0],
     "ParamExprLaugh": [0.0, 1.0], "ParamExprLove": [0.0, 1.0], "ParamExprSad": [0.0, 1.0],
     "ParamExprShocked": [0.0, 1.0], "ParamExprSus": [0.0, 1.0],
 }
 
-HEAD_LAYERS = {"head", "eye_L", "eye_R", "eye_mask_L", "eye_mask_R", "eyes_closed", "mouth_open",
+HEAD_LAYERS = {"head", "horns", "eye_L", "eye_R", "eye_mask_L", "eye_mask_R", "eyes_closed", "mouth_open",
                *EXPRESSION_LAYERS}
 
 
@@ -102,6 +103,90 @@ def _grid(region, cols, rows):
     return verts, uvs, tris
 
 
+def split_horns(layers: dict[str, Image.Image]) -> dict[str, Image.Image]:
+    """Scoate coarnele într-un strat propriu și umple părul rămas dedesubt.
+
+    Umplerea ia doar pixelii de păr vecini (stânga/dreapta, altfel din rândul de jos),
+    pe fiecare segment continuu al coarnelor — nu peste tot rândul.
+    """
+    import numpy as np
+
+    head = np.array(layers["head"].convert("RGBA")).astype(np.int16)
+    r, g, b, al = head[..., 0], head[..., 1], head[..., 2], head[..., 3]
+    # prag larg (și pe alpha mic) ca să prindă și conturul închis al coarnelor; pielea are
+    # r/g ≈ 1.35, deci nu intră, iar irisul roșu e sub y=250
+    horn = (al > 40) & (r > 50) & (r > g * 1.6) & (r > b * 1.6) & (g < 160)
+    horn[262:] = False   # baza coarnelor coboară până la ~y 250 în păr
+    for _ in range(3):                    # prinde și conturul închis de pe marginea coarnelor
+        grown = horn.copy()
+        grown[1:, :] |= horn[:-1, :]
+        grown[:-1, :] |= horn[1:, :]
+        grown[:, 1:] |= horn[:, :-1]
+        grown[:, :-1] |= horn[:, 1:]
+        horn = grown
+
+    horns = np.zeros_like(head)
+    horns[horn] = head[horn]
+
+    def redish(px):
+        """Culoare din familia coarnelor — nu are voie să servească drept sursă de umplere."""
+        return px[0] > 45 and px[0] > px[1] * 1.5 and px[0] > px[2] * 1.5
+
+    base = head.copy()
+    height, width = horn.shape
+    for y in range(height - 1, -1, -1):
+        row = horn[y]
+        if not row.any():
+            continue
+        cols = row.nonzero()[0]
+        runs, start_x = [], cols[0]
+        for prev, cur in zip(cols, cols[1:]):
+            if cur != prev + 1:
+                runs.append((start_x, prev))
+                start_x = cur
+        runs.append((start_x, cols[-1]))
+        for x0, x1 in runs:
+            left = next((base[y, x] for x in range(x0 - 1, max(-1, x0 - 60), -1)
+                         if base[y, x, 3] > 100 and not redish(base[y, x])), None)
+            right = next((base[y, x] for x in range(x1 + 1, min(width, x1 + 60))
+                          if base[y, x, 3] > 100 and not redish(base[y, x])), None)
+            below = base[min(height - 1, y + 1)]
+            if left is None and right is None:
+                left = right = below[(x0 + x1) // 2]
+            left = left if left is not None else right
+            right = right if right is not None else left
+            span = x1 - x0 + 1
+            for i, x in enumerate(range(x0, x1 + 1)):
+                if below[x, 3] > 100 and not redish(below[x]):   # părul se continuă în sus
+                    base[y, x] = below[x]
+                    continue
+                t = 0.5 if span == 1 else i / (span - 1)
+                base[y, x] = (left * (1 - t) + right * t).astype(np.int16)
+                base[y, x, 3] = max(left[3], right[3])
+    out = dict(layers)
+    out["head"] = Image.fromarray(np.clip(base, 0, 255).astype(np.uint8), "RGBA")
+    out["horns"] = Image.fromarray(np.clip(horns, 0, 255).astype(np.uint8), "RGBA")
+    return out
+
+
+PAD = 2
+
+
+def _padded(tile: Image.Image) -> Image.Image:
+    """Bordură de PAD px care repetă marginea — altfel bilingărul ia pixeli din tile-ul vecin."""
+    import numpy as np
+
+    arr = np.array(tile)
+    h, w = arr.shape[:2]
+    out = np.zeros((h + 2 * PAD, w + 2 * PAD, 4), dtype=arr.dtype)
+    out[PAD:PAD + h, PAD:PAD + w] = arr
+    out[:PAD, PAD:PAD + w] = arr[0]
+    out[PAD + h:, PAD:PAD + w] = arr[-1]
+    out[:, :PAD] = out[:, PAD:PAD + 1]
+    out[:, PAD + w:] = out[:, PAD + w - 1:PAD + w]
+    return Image.fromarray(out, "RGBA")
+
+
 def pack(layers: dict[str, Image.Image]):
     """Așază fiecare strat decupat în atlas (rafturi), întoarce imaginea și regiunile."""
     atlas = Image.new("RGBA", (ATLAS, ATLAS), (0, 0, 0, 0))
@@ -111,19 +196,21 @@ def pack(layers: dict[str, Image.Image]):
         box = layer.getchannel("A").getbbox()
         if box is None:
             raise ValueError(f"strat gol: {name}")
-        tile = layer.crop(box)
+        tile = _padded(layer.crop(box))
         w, h = tile.size
         if x + w > ATLAS:
             x, y, shelf = 0, y + shelf, 0
+        assert y + h <= ATLAS, f"atlas plin la {name}"
         atlas.paste(tile, (x, y))
-        regions[name] = (box[0], box[1], w, h, x, y, w, h)
+        regions[name] = (box[0], box[1], w - 2 * PAD, h - 2 * PAD, x + PAD, y + PAD,
+                         w - 2 * PAD, h - 2 * PAD)
         x += w
         shelf = max(shelf, h)
     return atlas, regions
 
 
 def build(first_level: bool = False):
-    layers = load_layers(RIG)
+    layers = split_horns(load_layers(RIG))
     atlas, regions = pack(layers)
     meshes, order = {}, []
     for name in DRAW:
@@ -141,9 +228,13 @@ def build(first_level: bool = False):
                              Binding(P["ParamEyeBallY"], KEYS["ParamEyeBallY"])]
             if name == "head":
                 bindings.append(Binding(P["ParamHairSwayX"], KEYS["ParamHairSwayX"]))
+            if name == "horns":
+                bindings.append(Binding(P["ParamHornsVis"], KEYS["ParamHornsVis"]))
             opacity_param = {"eyes_closed": "ParamEyeLOpen", "mouth_open": "ParamMouthOpenY"}.get(name)
             if name in EXPRESSION_LAYERS:
                 opacity_param = "ParamExpr" + name.split("_")[1].capitalize()
+            if name == "horns":
+                opacity_param = "ParamHornsVis"
             if opacity_param:
                 bindings.append(Binding(P[opacity_param], KEYS[opacity_param]))
             frames, opacities = [], []
@@ -219,6 +310,12 @@ EXPRESSIONS = [("Râs", "laugh", "ParamExprLaugh"), ("Îndrăgostit", "love", "P
                ("Trist", "sad", "ParamExprSad"), ("Șocat", "shocked", "ParamExprShocked"),
                ("Suspicios", "sus", "ParamExprSus")]
 
+# Comutatoare (accesorii). În VTS nu există hotkey „schimbă parametrul", deci mecanismul
+# oficial e expresia-toggle: hotkey de tip ToggleExpression pornește/oprește expresia,
+# iar la oprire parametrul revine la valoarea implicită (coarnele apar la loc).
+# Sursa: enum HotkeyAction (ToggleExpression=2) + wiki „Expressions".
+TOGGLES = [("Coarne ascunse", "hornsoff", {"ParamHornsVis": 0.0})]
+
 
 def physics_json() -> dict:
     """Două setări de fizică, pe structura din modelul referință (ellot)."""
@@ -276,7 +373,9 @@ def model3_json() -> dict:
             "Physics": "izentric.physics3.json",
             "DisplayInfo": "izentric.cdi3.json",
             "Expressions": [{"Name": name, "File": f"izentric.{slug}.exp3.json"}
-                            for name, slug, _p in EXPRESSIONS],
+                            for name, slug, _p in EXPRESSIONS]
+                           + [{"Name": name, "File": f"izentric.{slug}.exp3.json"}
+                              for name, slug, _v in TOGGLES],
         },
         "Groups": [
             {"Target": "Parameter", "Name": "LipSync", "Ids": ["ParamMouthOpenY"]},
@@ -293,6 +392,7 @@ def cdi3_json() -> dict:
               ("ParamGroupMouth", "Gură", ["ParamMouthOpenY"]),
               ("ParamGroupBody", "Corp", ["ParamBodyAngleX", "ParamBodyAngleZ", "ParamBreath"]),
               ("ParamGroupHair", "Păr", ["ParamHairSwayX"]),
+              ("ParamGroupAccessories", "Accesorii", ["ParamHornsVis"]),
               ("ParamGroupExpressions", "Expresii", [p for _n, _s, p in EXPRESSIONS])]
     return {
         "Version": 3,
@@ -300,6 +400,71 @@ def cdi3_json() -> dict:
                         "Name": name} for name, *_r in PARAMS],
         "ParameterGroups": [{"Id": g, "GroupId": "", "Name": label} for g, label, _ids in groups],
         "Parts": [{"Id": "PartCap", "Name": "Cap"}, {"Id": "PartCorp", "Name": "Corp"}],
+    }
+
+
+# Setările pe care VTS le ține pentru fiecare model în `<model>.vtube.json` (structura
+# copiată din cele două modele de referință: ParameterSettings / Hotkeys / ArtMeshDetails /
+# ItemSettings / GeneralSettings / PhysicsSettings).
+TRACKING = [
+    ("Face Left/Right Rotation", "FaceAngleX", "ParamAngleX", -40, 40, -30, 30, 15),
+    ("Face Up/Down Rotation", "FaceAngleY", "ParamAngleY", -30, 30, -30, 30, 0),
+    ("Face Lean Rotation", "FaceAngleZ", "ParamAngleZ", -35, 35, -30, 30, 30),
+    ("Body Rotation X", "FaceAngleX", "ParamBodyAngleX", -40, 40, -10, 10, 20),
+    ("Body Rotation Z", "FaceAngleZ", "ParamBodyAngleZ", -30, 30, -10, 10, 20),
+    ("Eye Open Left", "EyeOpenLeft", "ParamEyeLOpen", 0, 1, 0, 1, 10),
+    ("Eye Open Right", "EyeOpenRight", "ParamEyeROpen", 0, 1, 0, 1, 10),
+    ("Eye X", "EyeRightX", "ParamEyeBallX", -1, 1, -1, 1, 8),
+    ("Eye Y", "EyeRightY", "ParamEyeBallY", -1, 1, -1, 1, 8),
+    ("Mouth Open", "MouthOpen", "ParamMouthOpenY", 0.03, 0.7, 0, 1, 0),
+    ("Auto Breath", "", "ParamBreath", 0, 1, 0, 1, 0),
+]
+
+
+def vtube_json() -> dict:
+    """Fișierul de setări VTS (îl rescrie VTS la prima salvare)."""
+    model_id = hashlib.md5(b"izentric-vtuber").hexdigest()
+    params = [{"Name": name, "Input": inp, "OutputLive2D": out,
+               "InputRangeLower": lo, "InputRangeUpper": hi,
+               "OutputRangeLower": olo, "OutputRangeUpper": ohi,
+               "Smoothing": smooth, "UseBlinking": False,
+               "UseBreathing": out == "ParamBreath"}
+              for name, inp, out, lo, hi, olo, ohi, smooth in TRACKING]
+    params += [{"Name": p, "Input": "", "OutputLive2D": p,
+                "InputRangeLower": 0, "InputRangeUpper": 1,
+                "OutputRangeLower": 0, "OutputRangeUpper": 1,
+                "Smoothing": 20, "UseBlinking": False, "UseBreathing": False}
+               for _n, _s, p in EXPRESSIONS]
+    hotkeys = [{"Name": name, "Action": "ToggleExpression", "File": f"izentric.{slug}.exp3.json",
+                "Trigger": {}}
+               for name, slug, _p in EXPRESSIONS]
+    hotkeys += [{"Name": name, "Action": "ToggleExpression", "File": f"izentric.{slug}.exp3.json",
+                 "Trigger": {}} for name, slug, _v in TOGGLES]
+    hotkeys.append({"Name": "Șterge toate expresiile", "Action": "RemoveAllExpressions",
+                    "File": "", "Trigger": {}})
+    return {
+        "Version": 1,
+        "Name": "iZentric",
+        "ModelID": model_id,
+        "FileReferences": {"Icon": "", "Model": "izentric.model3.json",
+                           "IdleAnimation": "", "IdleAnimationWhenTrackingLost": ""},
+        "ParameterSettings": params,
+        "Hotkeys": hotkeys,
+        "ArtMeshDetails": {"ArtMeshesExcludedFromPinning": [],
+                           "ArtMeshesThatDeleteItemsOnDrop": [],
+                           "ArtMeshSceneLightingMultipliers": [],
+                           "ArtMeshMultiplyAndScreenColors": []},
+        "ItemSettings": {"OnlyMoveWhenPinned": False, "AllowNormalHotkeyTriggers": True,
+                         "Multiplier_HeadAngleX": 1.0, "Multiplier_HeadAngleY": 1.0,
+                         "Multiplier_HeadAngleZ": 1.0, "Shift_HeadAngleX": 0.0,
+                         "Shift_HeadAngleY": 0.0, "Smoothing_HeadAngleX": 15.0,
+                         "Smoothing_HeadAngleY": 15.0, "Smoothing_HeadAngleZ": 15.0},
+        "GeneralSettings": {"TimeUntilTrackingLostIdleAnimation": 0.0,
+                            "WorkshopSharingForbidden": True,
+                            "EnableExpressionSaving": False},
+        "PhysicsSettings": {"Use": True, "UseLegacyPhysics": False, "Live2DPhysicsFPS": 3,
+                            "PhysicsStrength": 50, "WindStrength": 0,
+                            "DraggingPhysicsStrength": 49},
     }
 
 
@@ -315,6 +480,15 @@ def write_bundle(outdir: Path = RIG) -> dict:
         json.dumps(physics_json(), indent=2, ensure_ascii=False), encoding="utf-8")
     (outdir / "izentric.cdi3.json").write_text(
         json.dumps(cdi3_json(), indent=2, ensure_ascii=False), encoding="utf-8")
+    (outdir / "izentric.vtube.json").write_text(
+        json.dumps(vtube_json(), indent=2, ensure_ascii=False), encoding="utf-8")
+    for name, slug, values in TOGGLES:
+        expr = {"Type": "Live2D Expression",
+                "Parameters": [{"Id": pid, "Value": float(v), "Blend": "Overwrite"}
+                               for pid, v in values.items()],
+                "FadeInTime": 0.15, "FadeOutTime": 0.15}
+        (outdir / f"izentric.{slug}.exp3.json").write_text(
+            json.dumps(expr, indent=2, ensure_ascii=False), encoding="utf-8")
     for name, slug, param in EXPRESSIONS:
         expr = {"Type": "Live2D Expression",
                 "Parameters": [{"Id": p, "Value": 1.0 if p == param else 0.0, "Blend": "Overwrite"}
@@ -322,6 +496,16 @@ def write_bundle(outdir: Path = RIG) -> dict:
                 "FadeInTime": 0.2, "FadeOutTime": 0.2}
         (outdir / f"izentric.{slug}.exp3.json").write_text(
             json.dumps(expr, indent=2, ensure_ascii=False), encoding="utf-8")
+    # pachet gata de pus în VTS: exact fișierele pe care le citește aplicația
+    import zipfile
+
+    members = ["izentric.model3.json", "izentric.moc3", "texture_00.png",
+               "izentric.physics3.json", "izentric.cdi3.json", "izentric.vtube.json"]
+    members += [f"izentric.{slug}.exp3.json" for _n, slug, _p in EXPRESSIONS]
+    members += [f"izentric.{slug}.exp3.json" for _n, slug, _v in TOGGLES]
+    with zipfile.ZipFile(outdir / "izentric-vts.zip", "w", zipfile.ZIP_DEFLATED) as archive:
+        for member in members:
+            archive.write(outdir / member, member)
     return {"moc3_bytes": len(moc_bytes), "meshes": len(model.meshes),
             "params": len(model.params), "keyforms": moc3_keyforms(model)}
 

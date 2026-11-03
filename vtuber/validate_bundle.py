@@ -11,6 +11,15 @@ from pathlib import Path
 
 from moc3_read import Moc3
 
+# Enumul oficial VTS (Files/HotkeyAction.cs) — orice altă valoare e ignorată de VTS.
+HOTKEY_ACTIONS = {"TriggerAnimation", "ChangeIdleAnimation", "ToggleExpression",
+                  "RemoveAllExpressions", "MoveModel", "ChangeBackground", "ReloadMicrophone",
+                  "ReloadTextures", "CalibrateCam", "ChangeVTSModel", "TakeScreenshot",
+                  "ScreenColorOverlay", "RemoveAllItems", "ToggleItemScene",
+                  "DownloadRandomWorkshopItem", "ExecuteItemAction", "ArtMeshColorPreset",
+                  "ToggleTracker", "ToggleTwitchFeature", "LoadEffectPreset",
+                  "ToggleLive2DEditorAPI", "WebItemAction", "ToggleModelSound"}
+
 
 def validate(folder: Path) -> list[str]:
     errors: list[str] = []
@@ -86,6 +95,30 @@ def validate(folder: Path) -> list[str]:
                 for item in setting.get("Output", []):
                     if item["Destination"]["Id"] not in params:
                         errors.append(f"physics3: ieșire {item['Destination']['Id']} inexistentă")
+
+    vtube_path = folder / "izentric.vtube.json"
+    if not vtube_path.exists():
+        errors.append("lipsește izentric.vtube.json (setările VTS: parametri + hotkeys)")
+    else:
+        vtube = load(vtube_path)
+        if vtube:
+            ref = vtube.get("FileReferences", {})
+            if ref.get("Model") != model_path.name:
+                errors.append(f"vtube: FileReferences.Model={ref.get('Model')!r} "
+                              f"dar fișierul e {model_path.name}")
+            for key in ("Icon", "IdleAnimation", "IdleAnimationWhenTrackingLost"):
+                if ref.get(key) and not (folder / ref[key]).exists():
+                    errors.append(f"vtube: FileReferences.{key} lipsește: {ref[key]}")
+            for setting in vtube.get("ParameterSettings", []):
+                if setting.get("OutputLive2D") not in params:
+                    errors.append(f"vtube: parametrul {setting.get('OutputLive2D')} nu există în moc3")
+            for hotkey in vtube.get("Hotkeys", []):
+                if hotkey.get("File") and not (folder / hotkey["File"]).exists():
+                    errors.append(f"vtube hotkey {hotkey.get('Name')}: fișierul "
+                                  f"{hotkey['File']} lipsește")
+                if hotkey.get("Action") not in HOTKEY_ACTIONS:
+                    errors.append(f"vtube hotkey {hotkey.get('Name')}: acțiune "
+                                  f"necunoscută {hotkey.get('Action')!r}")
 
     for forbidden in ("ellot", "VT_Dino", "Dinosaur", "dino"):
         if forbidden.lower() in model_path.read_text(encoding="utf-8").lower():

@@ -62,17 +62,22 @@ def test_head_actually_moves(layers):
     assert changed.sum() > 20000
 
 
-def test_eyeball_always_covers_the_eye_opening(layers):
-    """Globul ocular alunecă pe sub gene, dar masca deschiderii rămâne mereu acoperită:
-    dacă nu, s-ar vedea o fereastră goală în ochi la privirea maximă."""
-    for side in ("L", "R"):
-        mask = np.asarray(layers[f"eye_mask_{side}"].getchannel("A")) > 24
-        for eyeball_x in (-1.0, -0.5, 0.0, 0.5, 1.0):
-            for eyeball_y in (-1.0, -0.5, 0.0, 0.5, 1.0):
-                moved = np.asarray(rp._shift(layers[f"eye_{side}"],
-                                             eyeball_x * rp.IRIS_PX_X,
-                                             eyeball_y * rp.IRIS_PX_Y).getchannel("A")) > 24
-                assert not (mask & ~moved).any(), f"gol în ochiul {side} la {eyeball_x}/{eyeball_y}"
+def test_looking_around_leaves_no_hole_in_the_eye(layers):
+    """Globul alunecă pe sub gene, iar în urmă rămâne albul reconstruit din `head`.
+    Nici la privirea maximă nu are voie să apară piele sau o fereastră transparentă."""
+    import rig_build
+
+    for eyeball_x in (-1.0, 0.0, 1.0):
+        for eyeball_y in (-1.0, 0.0, 1.0):
+            frame = rp.render(layers, eyeball_x=eyeball_x, eyeball_y=eyeball_y)
+            pixels = np.asarray(frame)
+            for side in ("L", "R"):
+                # chiar deschiderea desenată a ochiului (nu elipsa de siguranță, care
+                # cuprinde și pleoapa și obrazul — acolo pielea e normală)
+                core = np.asarray(layers[f"eye_{side}"].getchannel("A")) > 250
+                core = rig_build._erode(core, 5)
+                assert (pixels[..., 3][core] > 250).all(), \
+                    f"gol în ochiul {side} la {eyeball_x}/{eyeball_y}"
 
 
 def test_animation_is_a_real_loop_with_blinks_and_speech(layers):

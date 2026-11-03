@@ -62,6 +62,11 @@
       "Name": "ParamHairSwayX"
     },
     {
+      "Id": "ParamHornsVis",
+      "GroupId": "ParamGroupAccessories",
+      "Name": "ParamHornsVis"
+    },
+    {
       "Id": "ParamExprLaugh",
       "GroupId": "ParamGroupExpressions",
       "Name": "ParamExprLaugh"
@@ -112,6 +117,11 @@
       "Id": "ParamGroupHair",
       "GroupId": "",
       "Name": "Păr"
+    },
+    {
+      "Id": "ParamGroupAccessories",
+      "GroupId": "",
+      "Name": "Accesorii"
     },
     {
       "Id": "ParamGroupExpressions",

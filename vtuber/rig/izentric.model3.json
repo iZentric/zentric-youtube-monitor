@@ -27,6 +27,10 @@
       {
         "Name": "Suspicios",
         "File": "izentric.sus.exp3.json"
+      },
+      {
+        "Name": "Coarne ascunse",
+        "File": "izentric.hornsoff.exp3.json"
       }
     ]
   },
