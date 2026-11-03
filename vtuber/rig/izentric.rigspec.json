@@ -11,17 +11,17 @@
   "draw_order": [
     "eyes_closed",
     "mouth_open",
-    "iris_L",
-    "iris_R",
+    "eye_L",
     "eye_mask_L",
+    "eye_R",
     "eye_mask_R",
     "body",
     "head",
     "backing"
   ],
   "clipping": {
-    "iris_L": "eye_mask_L",
-    "iris_R": "eye_mask_R"
+    "eye_L": "eye_mask_L",
+    "eye_R": "eye_mask_R"
   },
   "deformers": [
     {
@@ -69,8 +69,8 @@
       "parent": "D_HeadRot",
       "layers": [
         "head",
-        "iris_L",
-        "iris_R",
+        "eye_L",
+        "eye_R",
         "eyes_closed",
         "mouth_open"
       ],
@@ -182,19 +182,19 @@
       {
         "value": -1,
         "layers": [
-          "iris_L",
-          "iris_R"
+          "eye_L",
+          "eye_R"
         ],
         "translate": [
-          -11,
+          -3,
           0
         ]
       },
       {
         "value": 0,
         "layers": [
-          "iris_L",
-          "iris_R"
+          "eye_L",
+          "eye_R"
         ],
         "translate": [
           0,
@@ -204,11 +204,11 @@
       {
         "value": 1,
         "layers": [
-          "iris_L",
-          "iris_R"
+          "eye_L",
+          "eye_R"
         ],
         "translate": [
-          11,
+          3,
           0
         ]
       }
@@ -217,19 +217,19 @@
       {
         "value": -1,
         "layers": [
-          "iris_L",
-          "iris_R"
+          "eye_L",
+          "eye_R"
         ],
         "translate": [
           0,
-          -9
+          -3
         ]
       },
       {
         "value": 0,
         "layers": [
-          "iris_L",
-          "iris_R"
+          "eye_L",
+          "eye_R"
         ],
         "translate": [
           0,
@@ -239,12 +239,12 @@
       {
         "value": 1,
         "layers": [
-          "iris_L",
-          "iris_R"
+          "eye_L",
+          "eye_R"
         ],
         "translate": [
           0,
-          9
+          3
         ]
       }
     ],
@@ -307,7 +307,7 @@
   },
   "notes": [
     "eyes_closed și mouth_open se pot lega și pe opacitate (mai simplu) sau pe clipping (mai curat).",
-    "iris_L / iris_R au nevoie de clipping pe eye_mask_L / eye_mask_R, altfel ies din ochi.",
+    "eye_L / eye_R au nevoie de clipping pe eye_mask_L / eye_mask_R, altfel iese ochiul din gene.",
     "Sprâncenele sunt desenate în cap: ParamBrowLY/RY există în cdi3, dar nu au ce mișca până nu sunt pe strat separat."
   ]
 }

@@ -30,24 +30,26 @@ def test_head_and_body_split_at_the_collar():
     assert body.getchannel("A").getbbox()[3] == head.size[1]            # trupul ajunge în marginea de jos
 
 
-def test_irises_are_circles_inside_the_eyes():
+def test_eye_mask_covers_the_whole_drawn_iris():
+    """Masca deschiderii trebuie să acopere TOT irisul desenat, altfel rămâne o verigă din
+    irisul din cap pe loc când globul se mută (adica „ochi sub ochi")."""
     layers = build_layers()
-    for name in ("iris_L", "iris_R"):
-        box = layers[name].getchannel("A").getbbox()
-        assert box is not None
-        width, height = box[2] - box[0], box[3] - box[1]
-        assert 90 <= width <= 115 and 90 <= height <= 115   # disc de rază ~52
-        assert abs(width - height) <= 4                      # rotund, nu oval
+    source = np.asarray(Image.open(ASSETS / "idle.png").convert("RGBA")).astype(np.uint8)
+    for side in ("L", "R"):
+        blob = rig_build.iris_blob(source, rig_build.IRIS_CIRCLES[side])
+        mask = np.asarray(layers[f"eye_mask_{side}"].getchannel("A")) > 24
+        assert not (blob & ~mask).any(), f"irisul {side} iese din mască"
+        assert mask.sum() > blob.sum(), "masca e mai mică decât irisul"
 
 
-def test_head_has_white_where_the_iris_was():
-    """Fără whitening, irisul rămas în cap s-ar vedea dublu când se mișcă."""
+def test_eyeball_layer_has_margin_for_the_whole_travel():
+    """Globul are 14 px de rezervă în jurul deschiderii: cât alunecă la maxim (±11)."""
     layers = build_layers()
-    head = np.asarray(layers["head"])
-    left, _right = iris_masks((1024, 1024))
-    ys, xs = np.nonzero(left)
-    centre = (int(ys.mean()), int(xs.mean()))
-    assert head[centre][:3].min() > 230   # albul ochiului, nu irisul albastru
+    for side in ("L", "R"):
+        mask = np.asarray(layers[f"eye_mask_{side}"].getchannel("A")) > 24
+        eyeball = np.asarray(layers[f"eye_{side}"].getchannel("A")) > 24
+        grown = rig_build._dilate(mask, 12)
+        assert (grown & ~eyeball).sum() == 0, f"globul {side} nu are rezervă de 12 px"
 
 
 def test_eyes_closed_and_mouth_open_touch_only_their_regions():
@@ -100,11 +102,22 @@ def test_psd_round_trip_keeps_the_layers():
     # altfel gulerul nu mai acoperă gâtul când PSD-ul e importat în editor
     assert names == rig_build.DRAW_ORDER
     groups = [layer.name.strip("\x00") for layer in psd if layer.is_group()]
-    assert groups == ["FACE", "MASKS", "BODY", "HEAD", "BACKING"]   # sus -> jos
+    assert groups == ["FACE", "BODY", "HEAD", "BACKING"]   # sus -> jos
+
+    # clipping-ul scris in PSD (glob ocular lipit de masca lui), ca in editor
+    top = {layer.name.strip("\x00"): layer for layer in flatten(psd)}
+    assert top["eye_L"].clipping and top["eye_R"].clipping, "globul nu are clipping in PSD"
+    assert not top["eye_mask_L"].visible and not top["eye_mask_R"].visible
 
     rebuilt = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
     for layer in reversed(list(flatten(psd, visible_only=True))):
-        rebuilt.alpha_composite(layer.topil().convert("RGBA"))
+        image = layer.topil().convert("RGBA")
+        name = layer.name.strip("\x00")
+        mask_name = rig_build.CLIPPING.get(name)
+        if mask_name:
+            image.putalpha(ImageChops.multiply(image.getchannel("A"),
+                                               top[mask_name].topil().convert("RGBA").getchannel("A")))
+        rebuilt.alpha_composite(image)
     original = Image.open(ASSETS / "idle.png").convert("RGBA")
     assert np.sqrt((difference(rebuilt, original) ** 2).mean()) < 1.0
 

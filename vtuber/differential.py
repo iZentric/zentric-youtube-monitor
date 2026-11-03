@@ -8,7 +8,7 @@ Măsurători pe fiecare cadru:
   gauri        - pixeli transparenți închiși în interiorul siluetei (se vede dedesubt)
   guler        - aceleași gauri, dar în banda gulerului (y 600-780) — trebuie 0
   iou          - cât se suprapune silueta cu cea de repaus (capul are voie să se miște)
-  iris_afara   - pixeli de iris ieșiți din masca ochiului — trebuie 0
+  ochi_gol     - pixeli nemascați în deschiderea ochiului la orice privire — trebuie 0
   miscare      - câți pixeli chiar se schimbă (un parametru care nu face nimic e un bug)
 
 Rulare:  python vtuber/differential.py [--cases 281] [--save-worst DIR]
@@ -84,17 +84,18 @@ def measure(layers: dict[str, Image.Image], case: dict, baseline: np.ndarray) ->
     solid = alpha > 24
     union = solid | baseline
     iou = float((solid & baseline).sum() / max(1, union.sum()))
-    iris_outside = 0
+    # globul ocular acoperă masca complet? (dacă nu, rămâne o fereastră goală în ochi)
+    eye_gap = 0
     for side in ("L", "R"):
         mask = np.asarray(layers[f"eye_mask_{side}"].getchannel("A")) > 24
-        iris = np.asarray(rp._shift(layers[f"iris_{side}"],
-                                    case["eyeball_x"] * rp.IRIS_PX_X,
-                                    case["eyeball_y"] * rp.IRIS_PX_Y).getchannel("A")) > 24
-        iris_outside += int((iris & ~mask).sum())
+        eyeball = np.asarray(rp._shift(layers[f"eye_{side}"],
+                                       case["eyeball_x"] * rp.IRIS_PX_X,
+                                       case["eyeball_y"] * rp.IRIS_PX_Y).getchannel("A")) > 24
+        eye_gap += int((mask & ~eyeball).sum())
 
     area = int(solid.sum())
     return {"frame": frame, "holes": closed_holes(alpha), "area": area,
-            "collar": closed_holes(alpha, COLLAR), "iou": iou, "iris_outside": iris_outside}
+            "collar": closed_holes(alpha, COLLAR), "iou": iou, "eye_gap": eye_gap}
 
 
 def run(count: int = CASES, save_worst: Path | None = None, verbose: bool = True) -> dict:
@@ -117,7 +118,7 @@ def run(count: int = CASES, save_worst: Path | None = None, verbose: bool = True
     baseline_area = int(rest_solid.sum())
     limits = {
         "collar": 0,
-        "iris_outside": 0,
+        "eye_gap": 0,
         "holes": baseline_holes + 10,
         "area_change": 0.02,      # forma se schimbă la rotire, dar masa personajului nu
     }
@@ -126,8 +127,8 @@ def run(count: int = CASES, save_worst: Path | None = None, verbose: bool = True
         problems = []
         if row["collar"] > limits["collar"]:
             problems.append(f"guler {row['collar']}")
-        if row["iris_outside"] > limits["iris_outside"]:
-            problems.append(f"iris afară {row['iris_outside']}")
+        if row["eye_gap"] > limits["eye_gap"]:
+            problems.append(f"ochi gol {row['eye_gap']}")
         if row["holes"] > limits["holes"]:
             problems.append(f"gauri {row['holes']} > {limits['holes']}")
         change = abs(row["area"] - baseline_area) / baseline_area
@@ -150,14 +151,14 @@ def run(count: int = CASES, save_worst: Path | None = None, verbose: bool = True
         "worst_holes": max(row["holes"] for row in results),
         "min_iou": min(row["iou"] for row in results),
         "worst_area": max(row["area_change"] for row in results),
-        "worst_iris": max(row["iris_outside"] for row in results),
+        "worst_eye_gap": max(row["eye_gap"] for row in results),
         "still_cases": sum(1 for row in results if row["moved"] < 200),
     }
     if verbose:
         print(f"cazuri: {summary['cases']}   picate: {summary['failed']}")
         print(f"  gauri repaus (referinta): {baseline_holes}   maxim in teste: {summary['worst_holes']}")
         print(f"  gauri la guler: maxim {summary['worst_collar']} (trebuie 0)")
-        print(f"  iris iesit din ochi: maxim {summary['worst_iris']} (trebuie 0)")
+        print(f"  ochi gol (masca neacoperita): maxim {summary['worst_eye_gap']} (trebuie 0)")
         print(f"  variatie arie: maxim {summary['worst_area'] * 100:.2f}% (trebuie <= 2%)")
         print(f"  suprapunere silueta (informativ): minim {summary['min_iou']:.3f}")
         print(f"  cazuri fara nicio miscare: {summary['still_cases']}")

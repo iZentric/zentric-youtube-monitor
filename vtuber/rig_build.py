@@ -5,12 +5,12 @@ editor Live2D (Ayatsuri2D, Umamo, Cubism) ca să miște capul, ochii și gura se
 
     body   — hanoracul și umerii
     head   — capul, fără iris (albul ochiului rămâne în cap)
-    iris_L / iris_R — irisul cu pupilă și reflexe, mutabil pe sub pleoapă
+    eye_L / eye_R — globul ocular (albul + irisul + reflexele), mutabil pe sub gene
     eyes_closed — pleoapele închise (din `blink`)
     mouth_open  — gura deschisă (din `talking`)
     mouth_mid   — gura pe jumătate (derivată)
 
-Reconstrucția e verificată: `head` + `iris_L` + `iris_R` trebuie să dea `idle.png` la pixel.
+Reconstrucția e verificată: `head` + `eye_L` + `eye_R` trebuie să dea `idle.png` la pixel.
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ import json
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageFilter
+from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 HERE = Path(__file__).parent
 ASSETS = HERE / "assets"
@@ -202,6 +202,49 @@ def eye_white(pixels: np.ndarray, blob: np.ndarray, grow: int = 3, iterations: i
     return out
 
 
+def _erode(mask: np.ndarray, radius: int) -> np.ndarray:
+    """Micșorează o mască (inversul dilatației)."""
+    if radius <= 0:
+        return mask
+    grown = _dilate(~mask, radius)
+    return ~grown
+
+
+def eye_interior(pixels: np.ndarray, zone: np.ndarray, ellipse: np.ndarray,
+                brightness: float = 140.0) -> np.ndarray:
+    """Forma deschiderii ochiului desenat: albul + irisul, până la gene.
+
+    Nu e o elipsă ghicită: se ia ce e desenat luminos (albul ochiului, irisul, reflexele)
+    din interiorul elipsei de siguranță, fără piele, și se ține doar bucata legată de iris.
+    Genele rămân afară, deci conturul ochiului stă pe loc când globul se mișcă.
+    """
+    rgb = pixels[..., :3].astype(np.float32)
+    luminance = rgb.mean(axis=2)
+    skin = skin_mask(Image.fromarray(pixels[..., :3], "RGB"))
+    # genele și umbra închisă neutră (cenușie) rămân PE LOC, în cap: se mișcă doar
+    # albul ochiului și irisul colorat. Altfel umbra de sub pleoapă alunecă și apare
+    # ca un cârlig negru în capătul de jos al ochiului.
+    rgb_i = pixels[..., :3].astype(np.int16)
+    sat = rgb_i.max(axis=2) - rgb_i.min(axis=2)
+    dark_neutral = (luminance < 150) & (sat < 35) & ~zone
+    # alb curat (fără umbra albăstruie de sub iris): umbra rămâne pe loc, lipită de geană,
+    # și nu se plimbă prin ochi când se mută globul
+    sat_i = pixels[..., :3].astype(np.int16)
+    sat_i = sat_i.max(axis=2) - sat_i.min(axis=2)
+    white = (luminance > 225) & ~skin   # doar albul curat; umbra albăstruie rămâne pe loc
+    content = ellipse & ~dark_neutral & (zone | white)
+    ys, xs = np.nonzero(zone)
+    if not len(ys):
+        return zone
+    blob = _blob_at(content, (int(np.median(xs)), int(np.median(ys))))
+    if blob.sum() < 400:
+        return zone
+    filled = Image.fromarray((blob).astype(np.uint8) * 255, "L").copy()
+    ImageDraw.floodfill(filled, (0, 0), 128)
+    holes = np.asarray(filled) == 0
+    return blob | holes
+
+
 def iris_masks(size: tuple[int, int], circles: dict[str, tuple[int, int, int]] | None = None):
     """Măști circulare pentru irise.
 
@@ -244,17 +287,15 @@ def build_layers(
     width, height = source.size
     pixels = np.asarray(source).astype(np.uint8)
 
-    left, right = iris_masks(source.size, circles)
-    iris_zone = left | right
-
-    # capul: irisul scos și înlocuit cu albul ochiului, ca irisul mutat să nu lase urmă
-    if iris_zone.any():
-        white = np.array([248, 250, 252], dtype=np.uint8)
-        no_iris = pixels.copy()
-        no_iris[iris_zone, :3] = white
-    else:
-        no_iris = pixels.copy()
-    head_source = Image.fromarray(no_iris, "RGBA")
+    circles = circles or IRIS_CIRCLES
+    # Globul ocular: un singur strat cu TOT ochiul desenat (albul + irisul + reflexele),
+    # decupat de masca deschiderii. La repaus se așază exact peste desen; la mișcare alunecă
+    # în întregime pe sub gene, deci în urmă nu rămâne nici un iris și nici o pată umplută.
+    # (Varianta cu iris decupat + alb inventat în cap lăsa un iris-fantomă care se mișca.)
+    blobs = {side: iris_blob(pixels, circles[side]) for side in ("L", "R")}
+    zones = {side: iris_mask_with_outline(pixels, blobs[side], 3) for side in ("L", "R")}
+    ellipses = eye_mask_masks(source.size, circles)
+    interiors = {side: eye_interior(pixels, zones[side], ellipses[side]) for side in ("L", "R")}
 
     # capul: tot ce e deasupra gulerului + gâtul (doar pielea) din banda de sub el.
     # Gulerul rămâne la trup, deci la rotire capul ia gâtul cu el și gulerul stă pe loc.
@@ -282,24 +323,40 @@ def build_layers(
     body_pixels[start:] = np.where((~skin[start:])[..., None], pixels[start:], 0)
     body = Image.fromarray(body_pixels, "RGBA")
 
-    eye_masks = eye_mask_masks(source.size, circles)
+    bright = (pixels[..., :3].astype(np.float32).mean(axis=2) > 200) & ~(zones["L"] | zones["R"])
+    sclera = np.median(pixels[..., :3][bright].reshape(-1, 3), axis=0)
     layers: dict[str, Image.Image] = {"head": head, "body": body}
     backing = backplate(body, head, source)
     if backing is not None:
         layers["backing"] = backing
-    for side, mask in eye_masks.items():
+    for side in ("L", "R"):
+        interior = interiors[side]
+        # marginea se retrage 2 px, ca să cadă în alb curat, nu peste umbra de sub iris;
+        # irisul rămâne însă întreg în mască, altfel se vede o verigă din el când se mută
+        # se retrage DOAR bordura de alb curat (ca marginea să cadă în alb, nu peste umbră),
+        # irisul și umbra lui rămân întregi — altfel marginea taie irisul când alunecă
+        inner_band = interior & ~_erode(interior, 3)
+        lum_here = pixels[..., :3].astype(np.float32).mean(axis=2)
+        trim = inner_band & (lum_here > 225)
+        core = (interior & ~trim) | blobs[side]
         layer = np.zeros_like(pixels)
-        layer[mask] = [255, 255, 255, 255]
-        layers[f"eye_mask_{side}"] = Image.fromarray(layer, "RGBA")
-    for name, mask in (("iris_L", left), ("iris_R", right)):
-        layer = np.zeros_like(pixels)
-        layer[mask] = pixels[mask]
-        layer[..., 3] = np.where(mask, 255, 0).astype(np.uint8)
-        image = Image.fromarray(layer, "RGBA")
-        if IRIS_FEATHER:
-            alpha = image.getchannel("A").filter(ImageFilter.GaussianBlur(IRIS_FEATHER))
-            image.putalpha(alpha)
-        layers[name] = image
+        layer[core] = [255, 255, 255, 255]
+        mask_image = Image.fromarray(layer, "RGBA")
+        # estompare de 1 px, dar NUMAI înăuntru: dacă estomparea iese din deschidere, amestecă
+        # albul de rezervă cu obrazul și se umple ochiul la repaus
+        smooth = np.asarray(mask_image.getchannel("A").filter(ImageFilter.GaussianBlur(1.0)))
+        alpha = Image.fromarray(np.where(core, smooth, 0).astype(np.uint8), "L")
+        mask_image.putalpha(alpha)
+        layers[f"eye_mask_{side}"] = mask_image
+        # Globul ocular: desenul ochiului + 12 px de alb în jur (cât alunecă la maxim, ±11).
+        # Marginea NU se ia din poza de lângă ochi (ar intra genele și pielea în ochi când
+        # se mută), ci se prelungește albul ochiului — se vede ca scleră, nu ca o dungă.
+        eyeball = np.zeros_like(pixels)
+        eyeball[interior] = pixels[interior]
+        margin = _dilate(interior, 14) & ~interior
+        eyeball[margin] = [int(v) for v in sclera] + [255]
+        eyeball[interior | margin, 3] = 255
+        layers[f"eye_{side}"] = Image.fromarray(eyeball, "RGBA")
 
     # pleoapele închise: diferența dintre blink și idle
     from puppet import difference_mask
@@ -397,11 +454,18 @@ def _patch(state: Image.Image, mask) -> Image.Image:
 
 
 def composite(layers: dict[str, Image.Image], order: list[str] | None = None) -> Image.Image:
-    """Reconstruiește cadrul din straturi, în ordinea dată."""
+    """Reconstruiește cadrul din straturi, în ordinea dată, cu clipping ca în editor."""
     order = order or COMPOSITE_ORDER
     frame = Image.new("RGBA", layers[order[0]].size, (0, 0, 0, 0))
     for name in order:
-        frame.alpha_composite(layers[name])
+        layer = layers[name]
+        mask_name = CLIPPING.get(name)
+        if mask_name:
+            layer = layer.copy()
+            alpha = layer.getchannel("A")
+            mask = layers[mask_name].getchannel("A")
+            layer.putalpha(ImageChops.multiply(alpha, mask))
+        frame.alpha_composite(layer)
     return frame
 
 
@@ -412,13 +476,14 @@ GROUPS = [
     ("BACKING", True, ["backing"]),
     ("HEAD", True, ["head"]),
     ("BODY", True, ["body"]),
-    ("MASKS", False, ["eye_mask_R", "eye_mask_L"]),
-    ("FACE", True, ["iris_R", "iris_L", "mouth_open", "eyes_closed"]),
+    # masca stă LIPITĂ sub globul ei: așa se poate scrie clipping real în PSD, iar în editor
+    # globul nu iese din ochi (altfel s-ar vedea albul de rezervă ca un inel pe obraz)
+    ("FACE", True, ["eye_mask_R", "eye_R", "eye_mask_L", "eye_L", "mouth_open", "eyes_closed"]),
 ]
 DRAW_ORDER = [name for _, _, members in reversed(GROUPS) for name in reversed(members)]
-COMPOSITE_ORDER = ["backing", "head", "iris_L", "iris_R", "body"]
-HIDDEN_BY_DEFAULT = {"eyes_closed", "mouth_open"}
-CLIPPING = {"iris_L": "eye_mask_L", "iris_R": "eye_mask_R"}
+COMPOSITE_ORDER = ["backing", "head", "eye_L", "eye_R", "body"]
+HIDDEN_BY_DEFAULT = {"eyes_closed", "mouth_open", "eye_mask_L", "eye_mask_R"}
+CLIPPING = {"eye_L": "eye_mask_L", "eye_R": "eye_mask_R"}
 
 
 def write_psd(path: Path, layers: dict[str, Image.Image]) -> Path:
@@ -459,6 +524,12 @@ def write_psd(path: Path, layers: dict[str, Image.Image]) -> Path:
         size=(height, width),
         compression=enums.Compression.zip,  # RLE ar cere pachetul `packbits`, care nu e instalat
     )
+    # clipping real în PSD („clip to layer below"), ca editorul să taie singur globul
+    records = psd.layer_and_mask_info.layer_info.layer_records
+    by_name = {record.name.strip("\x00"): record for record in records}
+    for layer_name in CLIPPING:
+        if layer_name in by_name:
+            by_name[layer_name].clipping = True
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "wb") as handle:
         psd.write(handle)
@@ -554,7 +625,7 @@ def rig_spec() -> dict:
                 "id": "D_HeadWarp",
                 "type": "warp",
                 "parent": "D_HeadRot",
-                "layers": ["head", "iris_L", "iris_R", "eyes_closed", "mouth_open"],
+                "layers": ["head", "eye_L", "eye_R", "eyes_closed", "mouth_open"],
                 "pivot": [512, 430],
                 "parameters": ["ParamAngleX", "ParamAngleY"],
             },
@@ -584,14 +655,14 @@ def rig_spec() -> dict:
                 {"value": 1, "layer": "eyes_closed", "opacity": 0},
             ],
             "ParamEyeBallX": [
-                {"value": -1, "layers": ["iris_L", "iris_R"], "translate": [-11, 0]},
-                {"value": 0, "layers": ["iris_L", "iris_R"], "translate": [0, 0]},
-                {"value": 1, "layers": ["iris_L", "iris_R"], "translate": [11, 0]},
+                {"value": -1, "layers": ["eye_L", "eye_R"], "translate": [-3, 0]},
+                {"value": 0, "layers": ["eye_L", "eye_R"], "translate": [0, 0]},
+                {"value": 1, "layers": ["eye_L", "eye_R"], "translate": [3, 0]},
             ],
             "ParamEyeBallY": [
-                {"value": -1, "layers": ["iris_L", "iris_R"], "translate": [0, -9]},
-                {"value": 0, "layers": ["iris_L", "iris_R"], "translate": [0, 0]},
-                {"value": 1, "layers": ["iris_L", "iris_R"], "translate": [0, 9]},
+                {"value": -1, "layers": ["eye_L", "eye_R"], "translate": [0, -3]},
+                {"value": 0, "layers": ["eye_L", "eye_R"], "translate": [0, 0]},
+                {"value": 1, "layers": ["eye_L", "eye_R"], "translate": [0, 3]},
             ],
             "ParamMouthOpenY": [
                 {"value": 0, "layer": "mouth_open", "opacity": 0},
@@ -609,7 +680,7 @@ def rig_spec() -> dict:
         },
         "notes": [
             "eyes_closed și mouth_open se pot lega și pe opacitate (mai simplu) sau pe clipping (mai curat).",
-            "iris_L / iris_R au nevoie de clipping pe eye_mask_L / eye_mask_R, altfel ies din ochi.",
+            "eye_L / eye_R au nevoie de clipping pe eye_mask_L / eye_mask_R, altfel iese ochiul din gene.",
             "Sprâncenele sunt desenate în cap: ParamBrowLY/RY există în cdi3, dar nu au ce mișca până nu sunt pe strat separat.",
         ],
     }

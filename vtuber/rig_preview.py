@@ -23,7 +23,7 @@ HERE = Path(__file__).parent
 RIG = HERE / "rig"
 ASSETS = HERE / "assets"
 
-LAYER_FILES = ("backing", "head", "body", "iris_L", "iris_R", "eyes_closed", "mouth_open", "eye_mask_L", "eye_mask_R")
+LAYER_FILES = ("backing", "head", "body", "eye_L", "eye_R", "eyes_closed", "mouth_open", "eye_mask_L", "eye_mask_R")
 
 # valorile din rigspec
 PIVOT = (512, 655)
@@ -33,8 +33,8 @@ WARP_TOP = 37          # vârful capului: aici deplasarea e maximă
 HEAD_PX_PER_DEGREE_X = 14 / 30
 HEAD_PX_PER_DEGREE_Y = 10 / 30
 HEAD_DEGREES_PER_DEGREE_Z = 8 / 30
-IRIS_PX_X = 11.0
-IRIS_PX_Y = 9.0
+IRIS_PX_X = 4.0
+IRIS_PX_Y = 4.0
 
 
 def smoothstep(value: float) -> float:
@@ -127,9 +127,11 @@ def _face_stack(layers: dict[str, Image.Image], eyeball_x: float, eyeball_y: flo
                 eye_open: float, mouth: float) -> Image.Image:
     stack = layers["head"].copy()
 
+    # Globul ocular alunecă întreg (alb + iris + reflexe) pe sub gene; masca deschiderii îl
+    # ține în ochi. Așa nu rămâne nimic din desenul de dedesubt când privirea se mută.
     for side in ("L", "R"):
-        iris = _shift(layers[f"iris_{side}"], eyeball_x * IRIS_PX_X, eyeball_y * IRIS_PX_Y)
-        stack.alpha_composite(_clip(iris, layers[f"eye_mask_{side}"]))
+        eyeball = _shift(layers[f"eye_{side}"], eyeball_x * IRIS_PX_X, eyeball_y * IRIS_PX_Y)
+        stack.alpha_composite(_clip(eyeball, layers[f"eye_mask_{side}"]))
 
     closed = smoothstep((0.6 - eye_open) / 0.4)
     if closed > 0:

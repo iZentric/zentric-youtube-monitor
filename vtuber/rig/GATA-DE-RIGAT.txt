@@ -21,11 +21,13 @@ PASII, IN ORDINE:
      - faci 2 "warp deformer" si 1 "rotation deformer"
      - legi capul de ParamAngleX / ParamAngleY / ParamAngleZ
      - legi ochii de ParamEyeLOpen / ParamEyeROpen (opacitate 0 -> 100)
-     - legi irisele de ParamEyeBallX / ParamEyeBallY si le pui clipping pe
-       eye_mask_L si eye_mask_R (altfel ies din ochi)
+     - legi globii oculari (eye_L / eye_R) de ParamEyeBallX / ParamEyeBallY
+       Clipping-ul e DEJA scris in PSD (eye_L lipit de eye_mask_L, eye_R de
+       eye_mask_R), deci nu trebuie pus de mana; daca editorul il pierde, pune-l
+       tu: „clip to layer below" pe fiecare glob, peste masca lui.
      - legi gura de ParamMouthOpenY (opacitate 0 -> 100)
 4. NU schimba ordinea straturilor din PSD. Asa cum e, e corect:
-   FACE (ochi, gura, irise) / MASKS / BODY / HEAD / BACKING.
+   FACE (ochi, gura, globii oculari + mastile lor) / BODY / HEAD / BACKING.
    BODY sta DEASUPRA lui HEAD, ca gulerul sa acopere gatul cand capul se roteste.
    BACKING e la fund: umple deschizatura husei, ca sa nu se vada fundalul.
 5. Export  ->  moc3, versiunea 5.0, cu model3.json si texturile bifate.
@@ -35,7 +37,7 @@ PASII, IN ORDINE:
 8. Deschide VTube Studio, alege modelul, ruleaza Auto-Setup daca il cere.
 
 DACA CEVA NU MERGE:
-  - daca irisele ies din ochi  -> lipseste clippingul (pasul 3)
+  - daca ochiul iese din gene -> lipseste clippingul globului (pasul 3)
   - daca ochii nu clipesc     -> grupul EyeBlink nu e legat de ParamEyeLOpen/ROpen
   - daca gura nu se miste     -> grupul LipSync nu e legat de ParamMouthOpenY
   - daca modelul nu se incarca -> versiunea moc3 nu e 5.0, sau textura e peste 4096

@@ -48,15 +48,17 @@ def test_head_actually_moves(layers):
     assert changed.sum() > 20000
 
 
-def test_iris_stays_inside_the_eye_when_looking_sideways(layers):
-    """Irisul are voie să alunece, dar nu are voie să iasă din albul ochiului."""
-    mask = np.asarray(layers["eye_mask_L"].getchannel("A")) > 0
-    for eyeball_x in (-1.0, 0.0, 1.0):
-        for eyeball_y in (-1.0, 0.0, 1.0):
-            stack = rp._face_stack(layers, eyeball_x, eyeball_y, 1.0, 0.0)
-            iris = np.asarray(rp._shift(layers["iris_L"], eyeball_x * rp.IRIS_PX_X, eyeball_y * rp.IRIS_PX_Y).getchannel("A")) > 0
-            assert not (iris & ~mask).any(), f"iris în afara măștii la {eyeball_x}, {eyeball_y}"
-            assert iris.sum() > 1000, "irisul a dispărut"
+def test_eyeball_always_covers_the_eye_opening(layers):
+    """Globul ocular alunecă pe sub gene, dar masca deschiderii rămâne mereu acoperită:
+    dacă nu, s-ar vedea o fereastră goală în ochi la privirea maximă."""
+    for side in ("L", "R"):
+        mask = np.asarray(layers[f"eye_mask_{side}"].getchannel("A")) > 24
+        for eyeball_x in (-1.0, -0.5, 0.0, 0.5, 1.0):
+            for eyeball_y in (-1.0, -0.5, 0.0, 0.5, 1.0):
+                moved = np.asarray(rp._shift(layers[f"eye_{side}"],
+                                             eyeball_x * rp.IRIS_PX_X,
+                                             eyeball_y * rp.IRIS_PX_Y).getchannel("A")) > 24
+                assert not (mask & ~moved).any(), f"gol în ochiul {side} la {eyeball_x}/{eyeball_y}"
 
 
 def test_animation_is_a_real_loop_with_blinks_and_speech(layers):

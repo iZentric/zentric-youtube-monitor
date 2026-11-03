@@ -163,11 +163,23 @@ nu cu ce e sub cap: acolo arta e goală și ieșea o dungă gri lipită de guler
 (y=655), maxim sus (y=37). Așa capul se înclină fără să descopere gulerul. Rotația se face
 în jurul lui (512, 700), nu al pivotului, ca gulerul să rămână pe loc.
 
-**Pleoapele acoperă ochiul, nu se estompează peste el.** Stratul `eyes_closed` era o
-„diferență" estompată pe 7 px: la opacitate maximă rămânea urma ochiului deschis dedesubt
-plus un inel gri în jurul pleoapei. Acum e decupat tare (margine 0 px) pe zona care chiar
-se schimbă între deschis și închis. Rezultat: rama închisă = poza `blink.png`
-(aberație maximă 29 pe 5 pixeli), gura deschisă = poza `talking.png` (36 pe 45 de pixeli).
+**Ochiul e un singur „glob" care alunecă, nu un iris decupat peste un iris desenat.**
+Înainte, stratul mutabil era doar irisul, iar în cap rămânea irisul desenat; când privirea se
+muta, dedesubt se vedea al doilea iris — adică exact „ochiul sub ochi care se mișcă". Acum:
+
+1. `eye_L` / `eye_R` = tot ochiul desenat (albul, irisul, reflexele) plus 14 px de rezervă;
+2. `eye_mask_L` / `eye_mask_R` = deschiderea ochiului, măsurată pe desen (nu o elipsă ghicită);
+   masca e lipită sub glob în PSD, deci clipping-ul e scris în fișier (verificat cu `psd_tools`);
+3. în cap nu se mai șterge nimic — globul acoperă desenul la repaus pixel cu pixel și îl
+   acoperă în întregime și când alunecă.
+
+**Cât poate aluneca ochiul: ±3 px.** Irisul desenat umple aproape toată deschiderea, deci o
+cursă mai mare ar târî marginile globului peste gene (s-ar vedea o dâră albă pe geană).
+Cursa din `rigspec` e ±3 px pe ambele axe, exact cât încape în desenul tău.
+
+**Pleoapele acoperă ochiul.** Stratul `eyes_closed` e decupat tare pe zona care se schimbă
+între deschis și închis (nu o „diferență" estompată pe 7 px, care lăsa urma ochiului dedesubt).
+Rama închisă = poza `blink.png`, gura deschisă = poza `talking.png`.
 
 **Dovadă că nu e ochi sub ochi:** la toate cele 9 poziții ale privirii (±1 pe X și Y), banda
 de sub fiecare pleoapă are **0 pixeli întunecați** și exact același număr de pixeli ca poza
