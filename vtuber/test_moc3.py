@@ -5,7 +5,7 @@ import struct
 import pytest
 
 import check_moc3
-from moc3 import Mesh, Model, build
+from moc3 import Binding, Mesh, Model, build
 
 
 def _minimal() -> bytes:
@@ -56,3 +56,42 @@ def test_cubism_core_rejects_a_broken_file(tmp_path):
     path = tmp_path / "broken.moc3"
     path.write_bytes(bytes(blob))
     assert not check_moc3.core_accepts(str(path))["ok"]
+
+
+def _keyformed() -> bytes:
+    """Un mesh cu 2 legături (3×2 chei) și un al doilea mesh folosit ca mască."""
+    quad = [(0, 0), (512, 0), (512, 512), (0, 512)]
+    uvs = [(0, 0), (1, 0), (1, 1), (0, 1)]
+    frames = [[(x + i * 10, y) for x, y in quad] for i in range(6)]
+    faces = [Mesh("Mask", quad, uvs, [(0, 1, 2), (0, 2, 3)])]
+    body = Mesh("Body", quad, uvs, [(0, 1, 2), (0, 2, 3)], masks=[0],
+                bindings=[Binding(0, [-30.0, 0.0, 30.0]), Binding(1, [-2.0, 2.0])],
+                keyforms=frames, keyform_opacities=[1.0] * 6)
+    m = Model(canvas=(1024, 1024), parts=["P"],
+              params=[("ParamAngleX", -30, 30, 0), ("ParamAngleY", -2, 2, 0)],
+              meshes=faces + [body])
+    return build(m)
+
+
+def test_keyform_count_is_product_of_binding_keys():
+    import io
+    import tempfile
+
+    from moc3_read import Moc3
+    with tempfile.NamedTemporaryFile(suffix=".moc3", delete=False) as fh:
+        fh.write(_keyformed())
+        path = fh.name
+    moc = Moc3(path)
+    counts = moc.counts
+    assert counts[9] == 7                     # 1 (masca) + 6 (corpul)
+    assert moc.get("art_mesh.keyform_counts") == [1, 6]
+    assert moc.get("art_mesh.mask_counts") == [0, 1]
+    assert moc.get("drawable_mask.art_mesh_indices") == [0]
+
+
+@pytest.mark.skipif(not check_moc3.available(), reason="live2d-py nu e instalat")
+def test_cubism_core_accepts_keyforms_and_mask(tmp_path):
+    path = tmp_path / "kf.moc3"
+    path.write_bytes(_keyformed())
+    report = check_moc3.core_accepts(str(path))
+    assert report["ok"], report.get("error")

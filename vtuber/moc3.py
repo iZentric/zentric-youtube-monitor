@@ -147,8 +147,19 @@ COUNT_NAMES = ["parts", "deformers", "warp_deformers", "rotation_deformers", "ar
 
 
 @dataclass
+class Binding:
+    """O dimensiune de keyform: parametrul care o conduce + valorile cheie."""
+    param: int
+    keys: list[float]
+
+
+@dataclass
 class Mesh:
-    """Un art mesh. `verts`/`uvs` în pixeli, respectiv 0..1 din textura sursă."""
+    """Un art mesh. `verts`/`uvs` în pixeli, respectiv 0..1 din textura sursă.
+
+    Cu `bindings`, mesh-ul are len(product(keys)) keyforms, în ordinea
+    mixed-radix a legăturilor (prima legătură se schimbă cel mai repede).
+    """
     id: str
     verts: list[tuple[float, float]]
     uvs: list[tuple[float, float]]
@@ -156,7 +167,10 @@ class Mesh:
     part: int = 0
     texture: int = 0
     opacity: float = 1.0
-    masked: bool = False
+    masks: list[int] = field(default_factory=list)   # indici de art mesh folosiți ca mască
+    bindings: list[Binding] = field(default_factory=list)
+    keyforms: list[list[tuple[float, float]]] = field(default_factory=list)
+    keyform_opacities: list[float] = field(default_factory=list)
 
 
 @dataclass
@@ -221,35 +235,71 @@ def build(m: Model) -> bytes:
     n_mesh, n_part, n_param = len(m.meshes), len(m.parts), len(m.params)
     counts = [0] * 23
     counts[0], counts[4], counts[5] = n_part, n_mesh, n_param
-    counts[6], counts[9] = n_part, n_mesh           # part/mesh keyforms (unul per obiect)
-    counts[11] = counts[13] = n_mesh                # binding indices / bindings
-    counts[12] = n_mesh + n_param                   # benzi
-    counts[14] = n_mesh                             # keys
-    counts[17] = 1                                  # drawable masks (SDK cere total > 0)
-    counts[18] = 1                                  # un singur draw order group
+    counts[6] = n_part
+    counts[17] = 1                      # drawable masks (SDK cere total > 0)
+    counts[18] = 1                      # un singur draw order group
     counts[19] = n_mesh
 
+    # Legăturile se ordonează pe parametri: fiecare parametru deține un interval
+    # contiguu din tabelul de bindings (altfel parameter.keyform_binding_begin minte).
+    bindings, bind_pos = [], {}
+    for p in range(n_param):
+        for mi, mesh in enumerate(m.meshes):
+            for bi, b in enumerate(mesh.bindings):
+                if b.param == p:
+                    bind_pos[(mi, bi)] = len(bindings)
+                    bindings.append(b)
+
+    band_begin, band_count, binding_index = [], [], []
+    for mi, mesh in enumerate(m.meshes):
+        if mesh.bindings:
+            band_begin.append(len(binding_index))
+            band_count.append(len(mesh.bindings))
+            binding_index += [bind_pos[(mi, bi)] for bi in range(len(mesh.bindings))]
+        else:
+            band_begin.append(0)
+            band_count.append(0)
+    for _ in range(n_part):             # benzi nule pentru părți
+        band_begin.append(0)
+        band_count.append(0)
+    counts[11] = len(binding_index)
+    counts[12] = len(band_begin)
+    counts[13] = len(bindings)
+    counts[14] = sum(len(b.keys) for b in bindings)
+
     pos, uv, idx = [], [], []
-    uv_begin, idx_begin, kf_begin = [], [], []
-    for k, mesh in enumerate(m.meshes):
+    uv_begin, idx_begin = [], []
+    mesh_kf_begin, mesh_kf_count = [], []
+    kf_pos_begin, kf_opac, kf_draw = [], [], []
+    for mesh in m.meshes:
+        assert len(mesh.uvs) == len(mesh.verts), mesh.id
         uv_begin.append(len(uv))
         idx_begin.append(len(idx))
-        kf_begin.append(len(pos) // 2)
-        for x, y in mesh.verts:
-            nx, ny = nrm(x, y)
-            pos += [nx, ny]
+        frames = mesh.keyforms if mesh.bindings else [mesh.verts]
+        opacities = mesh.keyform_opacities if mesh.bindings else [mesh.opacity]
+        assert len(opacities) == len(frames), mesh.id
+        mesh_kf_begin.append(len(kf_opac))
+        mesh_kf_count.append(len(frames))
+        for frame, op in zip(frames, opacities):
+            assert len(frame) == len(mesh.verts), mesh.id
+            kf_pos_begin.append(len(pos))
+            for x, y in frame:
+                nx, ny = nrm(x, y)
+                pos += [nx, ny]
+            kf_opac.append(op)
+            kf_draw.append(500.0)
         for u, v in mesh.uvs:
             uv += [u, v]
         for t in mesh.tris:
             idx += list(t)
-        assert len(mesh.uvs) == len(mesh.verts), mesh.id
-    counts[10] = len(pos)          # floate (x,y intercalate), nu perechi
+    counts[9] = len(kf_opac)
+    counts[10] = len(pos)               # floate (x,y intercalate), nu perechi
     counts[15] = len(uv)
     counts[16] = len(idx)
 
     s = {}
     s["part.ids"] = list(m.parts)
-    s["part.keyform_binding_band_indices"] = [n_mesh + j for j in range(n_part)]  # benzi nule
+    s["part.keyform_binding_band_indices"] = [n_mesh + j for j in range(n_part)]
     s["part.keyform_begin_indices"] = list(range(n_part))
     s["part.keyform_counts"] = [1] * n_part
     s["part.visibles"] = [True] * n_part
@@ -259,20 +309,26 @@ def build(m: Model) -> bytes:
 
     s["art_mesh.ids"] = [mesh.id for mesh in m.meshes]
     s["art_mesh.keyform_binding_band_indices"] = list(range(n_mesh))
-    s["art_mesh.keyform_begin_indices"] = list(range(n_mesh))
-    s["art_mesh.keyform_counts"] = [1] * n_mesh
+    s["art_mesh.keyform_begin_indices"] = mesh_kf_begin
+    s["art_mesh.keyform_counts"] = mesh_kf_count
     s["art_mesh.visibles"] = [True] * n_mesh
     s["art_mesh.enables"] = [True] * n_mesh
     s["art_mesh.parent_part_indices"] = [mesh.part for mesh in m.meshes]
     s["art_mesh.parent_deformer_indices"] = [-1] * n_mesh
     s["art_mesh.texture_indices"] = [mesh.texture for mesh in m.meshes]
-    s["art_mesh.drawable_flags"] = [5 if mesh.masked else 4 for mesh in m.meshes]
+    s["art_mesh.drawable_flags"] = [4] * n_mesh
     s["art_mesh.position_index_counts"] = [len(mesh.verts) for mesh in m.meshes]
     s["art_mesh.uv_begin_indices"] = uv_begin
     s["art_mesh.position_index_begin_indices"] = idx_begin
     s["art_mesh.vertex_counts"] = [len(mesh.tris) * 3 for mesh in m.meshes]
-    s["art_mesh.mask_begin_indices"] = [0] * n_mesh
-    s["art_mesh.mask_counts"] = [0] * n_mesh
+    mask_begin, mask_count, mask_list = [], [], []
+    for mesh in m.meshes:
+        mask_begin.append(len(mask_list))
+        mask_count.append(len(mesh.masks))
+        mask_list += mesh.masks
+    s["art_mesh.mask_begin_indices"] = mask_begin if mask_list else [0] * n_mesh
+    s["art_mesh.mask_counts"] = mask_count
+    counts[17] = len(mask_list) or 1          # SDK cere total > 0
 
     s["parameter.ids"] = [p[0] for p in m.params]
     s["parameter.max_values"] = [p[2] for p in m.params]
@@ -280,24 +336,33 @@ def build(m: Model) -> bytes:
     s["parameter.default_values"] = [p[3] for p in m.params]
     s["parameter.repeats"] = [False] * n_param
     s["parameter.decimal_places"] = [1] * n_param
-    s["parameter.keyform_binding_begin_indices"] = [0] * n_param
-    s["parameter.keyform_binding_counts"] = [n_mesh] + [0] * (n_param - 1)
+    p_begin, p_count = [], []
+    for pi in range(n_param):
+        owned = [k for k, b in enumerate(bindings) if b.param == pi]
+        p_begin.append(owned[0] if owned else 0)
+        p_count.append(len(owned))
+    s["parameter.keyform_binding_begin_indices"] = p_begin
+    s["parameter.keyform_binding_counts"] = p_count
 
-    s["art_mesh_keyform.opacities"] = [mesh.opacity for mesh in m.meshes]
-    s["art_mesh_keyform.draw_orders"] = [500.0] * n_mesh
-    s["art_mesh_keyform.keyform_position_begin_indices"] = kf_begin
+    s["art_mesh_keyform.opacities"] = kf_opac
+    s["art_mesh_keyform.draw_orders"] = kf_draw
+    s["art_mesh_keyform.keyform_position_begin_indices"] = kf_pos_begin
 
     s["keyform_position.xys"] = pos
-    s["keyform_binding_index.indices"] = list(range(n_mesh))
-    s["keyform_binding_band.begin_indices"] = (
-        list(range(n_mesh)) + [0] * n_param)
-    s["keyform_binding_band.counts"] = [1] * n_mesh + [0] * n_param
-    s["keyform_binding.keys_begin_indices"] = list(range(n_mesh))
-    s["keyform_binding.keys_counts"] = [1] * n_mesh
-    s["keys.values"] = [m.params[0][3]] * n_mesh
+    s["keyform_binding_index.indices"] = binding_index
+    s["keyform_binding_band.begin_indices"] = band_begin
+    s["keyform_binding_band.counts"] = band_count
+    keys_begin, keys_count, key_values = [], [], []
+    for b in bindings:
+        keys_begin.append(len(key_values))
+        keys_count.append(len(b.keys))
+        key_values += list(b.keys)
+    s["keyform_binding.keys_begin_indices"] = keys_begin
+    s["keyform_binding.keys_counts"] = keys_count
+    s["keys.values"] = key_values
     s["uv.xys"] = uv
     s["position_index.indices"] = idx
-    s["drawable_mask.art_mesh_indices"] = [-1]
+    s["drawable_mask.art_mesh_indices"] = mask_list or [-1]
     s["draw_order_group.object_begin_indices"] = [0]
     s["draw_order_group.object_counts"] = [n_mesh]
     s["draw_order_group.object_total_counts"] = [n_mesh]
