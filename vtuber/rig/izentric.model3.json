@@ -5,7 +5,29 @@
     "Textures": [
       "texture_00.png"
     ],
-    "DisplayInfo": "izentric.cdi3.json"
+    "DisplayInfo": "izentric.cdi3.json",
+    "Expressions": [
+      {
+        "Name": "Râs",
+        "File": "izentric.laugh.exp3.json"
+      },
+      {
+        "Name": "Îndrăgostit",
+        "File": "izentric.love.exp3.json"
+      },
+      {
+        "Name": "Trist",
+        "File": "izentric.sad.exp3.json"
+      },
+      {
+        "Name": "Șocat",
+        "File": "izentric.shocked.exp3.json"
+      },
+      {
+        "Name": "Suspicios",
+        "File": "izentric.sus.exp3.json"
+      }
+    ]
   },
   "Groups": [
     {

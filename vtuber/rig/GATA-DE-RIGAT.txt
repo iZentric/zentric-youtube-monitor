@@ -30,16 +30,25 @@ PASII, IN ORDINE:
    FACE (ochi, gura, globii oculari + mastile lor) / BODY / HEAD / BACKING.
    BODY sta DEASUPRA lui HEAD, ca gulerul sa acopere gatul cand capul se roteste.
    BACKING e la fund: umple deschizatura husei, ca sa nu se vada fundalul.
-5. Export  ->  moc3, versiunea 5.0, cu model3.json si texturile bifate.
-6. Verifica (optional, dar recomandat):  python vtuber/check_model.py <folderul exportat>
-7. Pune folderul in:
+5. Expresii (ras, indragostit, trist, socat, suspicios):
+   - fiecare are parametrul ei (ParamExprLaugh ... ParamExprSus) care merge pe
+     opacitatea stratului expr_<nume> (0 -> 100)
+   - fisierele izentric.<nume>.exp3.json sunt deja in pachet si sunt trecute in
+     izentric.model3.json, deci VTube Studio le incarca singur: Settings >
+     Expressions / Hotkeys, pune fiecare expresie pe cate o tasta
+   - daca expresia nu apare: verifica sa fie in acelasi folder cu model3.json
+6. Export  ->  moc3, versiunea 5.0, cu model3.json si texturile bifate.
+7. Verifica (optional, dar recomandat):  python vtuber/check_model.py <folderul exportat>
+8. Pune folderul in:
    C:\Users\<numele tau>\AppData\LocalLow\DenchiSoft\VTubeStudio\Live2DModels\izentric\
-8. Deschide VTube Studio, alege modelul, ruleaza Auto-Setup daca il cere.
+9. Deschide VTube Studio, alege modelul, ruleaza Auto-Setup daca il cere.
 
 DACA CEVA NU MERGE:
   - daca ochiul iese din gene -> lipseste clippingul globului (pasul 3)
   - daca ochii nu clipesc     -> grupul EyeBlink nu e legat de ParamEyeLOpen/ROpen
   - daca gura nu se miste     -> grupul LipSync nu e legat de ParamMouthOpenY
   - daca modelul nu se incarca -> versiunea moc3 nu e 5.0, sau textura e peste 4096
+  - daca expresia nu se schimba -> parametrul ParamExpr... nu e legat de opacitatea
+    stratului expr_... (pasul 5), sau exp3 lipseste din folder
 
 Timp: 20-40 de minute.

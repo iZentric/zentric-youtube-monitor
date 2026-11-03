@@ -80,6 +80,31 @@
       "Id": "ParamString",
       "GroupId": "ParamGroupSway",
       "Name": "Șnururi glugă"
+    },
+    {
+      "Id": "ParamExprLaugh",
+      "GroupId": "ParamGroupExpressions",
+      "Name": "Râs"
+    },
+    {
+      "Id": "ParamExprLove",
+      "GroupId": "ParamGroupExpressions",
+      "Name": "Îndrăgostit"
+    },
+    {
+      "Id": "ParamExprSad",
+      "GroupId": "ParamGroupExpressions",
+      "Name": "Trist"
+    },
+    {
+      "Id": "ParamExprShocked",
+      "GroupId": "ParamGroupExpressions",
+      "Name": "Șocat"
+    },
+    {
+      "Id": "ParamExprSus",
+      "GroupId": "ParamGroupExpressions",
+      "Name": "Suspicios"
     }
   ],
   "ParameterGroups": [
@@ -117,6 +142,11 @@
       "Id": "ParamGroupSway",
       "GroupId": "",
       "Name": "Fizică"
+    },
+    {
+      "Id": "ParamGroupExpressions",
+      "GroupId": "",
+      "Name": "Expresii"
     }
   ],
   "Parts": []

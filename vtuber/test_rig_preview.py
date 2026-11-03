@@ -24,10 +24,24 @@ def rms(first: Image.Image, second: Image.Image) -> float:
     return float(np.sqrt(((a - b) ** 2).mean()))
 
 
+def clean(name: str) -> Image.Image:
+    """Poza de referință fără conturul verde de pe siluetă (vezi rig_build.despill)."""
+    import rig_build
+
+    raw = np.asarray(Image.open(rp.ASSETS / name).convert("RGBA")).astype(np.uint8)
+    return Image.fromarray(rig_build.despill(raw), "RGBA")
+
+
 def test_rest_frame_is_the_idle_art(layers):
     """Fără nicio valoare pe parametri, rigul trebuie să dea exact poza de repaus."""
-    idle = Image.open(rp.ASSETS / "idle.png")
-    assert rms(rp.render(layers), idle) < 1.0
+    assert rms(rp.render(layers), clean("idle.png")) < 1.0
+
+
+def test_no_green_fringe_left_on_the_silhouette(layers):
+    """Conturul verde din pozele sursă nu are voie să ajungă în model."""
+    frame = np.asarray(rp.render(layers).convert("RGB"), dtype=int)
+    green = ((frame[:, :, 1] > frame[:, :, 0] + 20) & (frame[:, :, 1] > frame[:, :, 2] + 20)).sum()
+    assert green == 0, f"{int(green)} pixeli verzi pe siluetă"
 
 
 def test_closed_eyes_reproduce_the_blink_art(layers):

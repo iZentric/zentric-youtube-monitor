@@ -187,3 +187,35 @@ originală — privirea nu adaugă nimic acolo. Vezi `test_nothing_eye_coloured_
 
 Imagini de control: `vtuber/rig/verificare-gat.png` (repaus, ±30°) și
 `vtuber/rig/verificare-ochi.png` (deschis / închis / pe jumătate / vorbit).
+
+## Expresii: râs, îndrăgostit, trist, șocat, suspicios
+
+Pozele tale de stare sunt folosite toate, nu doar repaus/clipit/vorbit. Pentru fiecare
+expresie se ia **numai fața** (piele + ochi + gură) și **decorurile care plutesc** (inimi,
+scânteieri, lacrimi, stropi de sudoare). Haina, gulerul și părul rămân din poza de repaus —
+altfel, la schimbarea expresiei, s-ar schimba și corpul (pozele au fiecare mâneca și firele
+de păr desenate puțin altfel; diferența măsurată pe haină e de 20 000–58 000 de pixeli).
+
+Cum e făcut fiecare strat `expr_<nume>`:
+
+1. diferența față de `idle.png`, dilatată cu 7 px (să prindă și marginea estompată);
+2. tăiată pe zona feței (piele + ochii + gura) — nu intră părul, nu intră conturul;
+3. plus decorațiunile: bucățile desenate care nu fac parte din personaj, plus petele mici și
+   compacte desenate peste păr (stropul de sudoare) — niciodată dârele subțiri de contur,
+   alea ar apărea ca o dungă peste păr;
+4. nimic sub guler (haina rămâne neatinsă — verificat cu test).
+
+Ordinea în stivă: expresiile stau **deasupra globilor oculari** (le înlocuiesc ochii) și
+**sub pleoape și sub gură**, ca să funcționeze „clipești cât râzi" și „vorbești cât râzi".
+
+Fiecare expresie are parametrul ei (`ParamExprLaugh` … `ParamExprSus`, 0–1) care merge pe
+opacitatea stratului, plus un fișier `.exp3.json` în formatul Cubism. Cele cinci fișiere sunt
+trecute în `izentric.model3.json` la `FileReferences.Expressions`, deci VTube Studio le
+încarcă singur și le poți pune pe hotkey-uri.
+
+## Conturul verde de pe siluetă
+
+`idle.png`, `blink.png`, `talking.png` și `talking_blink.png` au un contur **verde de 1 px**
+pe toată silueta (rămășiță de la decupare), ~4 700–5 000 de pixeli. Pozele de expresie nu-l au.
+`rig_build.despill()` înlocuiește pixelii verzi cu media vecinilor opaci, de aproape în
+aproape. Modelul are acum **0 pixeli verzi** (test dedicat), iar conturul rămâne al desenului.

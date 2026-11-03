@@ -23,7 +23,10 @@ HERE = Path(__file__).parent
 RIG = HERE / "rig"
 ASSETS = HERE / "assets"
 
-LAYER_FILES = ("backing", "head", "body", "eye_L", "eye_R", "eyes_closed", "mouth_open", "eye_mask_L", "eye_mask_R")
+LAYER_FILES = ("backing", "head", "body", "eye_L", "eye_R", "eyes_closed", "mouth_open",
+               "eye_mask_L", "eye_mask_R",
+               "expr_laugh", "expr_love", "expr_sad", "expr_shocked", "expr_sus")
+EXPRESSION_LAYERS = ("expr_laugh", "expr_love", "expr_sad", "expr_shocked", "expr_sus")
 
 # valorile din rigspec
 PIVOT = (512, 655)
@@ -124,7 +127,8 @@ def _clip(layer: Image.Image, mask: Image.Image) -> Image.Image:
 
 
 def _face_stack(layers: dict[str, Image.Image], eyeball_x: float, eyeball_y: float,
-                eye_open: float, mouth: float) -> Image.Image:
+                eye_open: float, mouth: float,
+                expressions: dict[str, float] | None = None) -> Image.Image:
     stack = layers["head"].copy()
 
     # Globul ocular alunecă întreg (alb + iris + reflexe) pe sub gene; masca deschiderii îl
@@ -132,6 +136,15 @@ def _face_stack(layers: dict[str, Image.Image], eyeball_x: float, eyeball_y: flo
     for side in ("L", "R"):
         eyeball = _shift(layers[f"eye_{side}"], eyeball_x * IRIS_PX_X, eyeball_y * IRIS_PX_Y)
         stack.alpha_composite(_clip(eyeball, layers[f"eye_mask_{side}"]))
+
+    # expresiile stau DEASUPRA globilor (le acoperă ochii desenați) și SUB pleoape
+    for name in EXPRESSION_LAYERS:
+        amount = (expressions or {}).get(name.removeprefix("expr_"), 0.0)
+        if amount <= 0:
+            continue
+        expression = layers[name].copy()
+        expression.putalpha(expression.getchannel("A").point(lambda v: round(v * amount)))
+        stack.alpha_composite(expression)
 
     closed = smoothstep((0.6 - eye_open) / 0.4)
     if closed > 0:
@@ -150,9 +163,10 @@ def _face_stack(layers: dict[str, Image.Image], eyeball_x: float, eyeball_y: flo
 
 def render(layers: dict[str, Image.Image], angle_x: float = 0.0, angle_y: float = 0.0,
            angle_z: float = 0.0, eyeball_x: float = 0.0, eyeball_y: float = 0.0,
-           eye_open: float = 1.0, mouth: float = 0.0) -> Image.Image:
+           eye_open: float = 1.0, mouth: float = 0.0,
+           expressions: dict[str, float] | None = None) -> Image.Image:
     """Un cadru: fața se mișcă rigid (rotire + alunecare), corpul stă pe loc."""
-    face = _face_stack(layers, eyeball_x, eyeball_y, eye_open, mouth)
+    face = _face_stack(layers, eyeball_x, eyeball_y, eye_open, mouth, expressions)
 
     degrees = angle_z * HEAD_DEGREES_PER_DEGREE_Z
     moved = face.rotate(-degrees, resample=Image.BICUBIC, center=ROTATION_CENTER)

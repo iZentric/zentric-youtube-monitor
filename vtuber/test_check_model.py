@@ -21,6 +21,9 @@ def make_bundle(folder: Path, moc_version: int = 5, texture=(1024, 1024), write_
         json.dumps(rig_build.model3("texture_00.png"), ensure_ascii=False), encoding="utf-8"
     )
     (folder / "izentric.cdi3.json").write_text(json.dumps(rig_build.cdi3(), ensure_ascii=False), encoding="utf-8")
+    for name in rig_build.EXPRESSIONS:
+        (folder / f"izentric.{name}.exp3.json").write_text(
+            json.dumps(rig_build.expression_file(name), ensure_ascii=False), encoding="utf-8")
     (folder / "izentric.moc3").write_bytes(b"MOC3" + bytes([moc_version]) + bytes(60))
     if write_texture:
         Image.new("RGBA", texture, (0, 0, 0, 0)).save(folder / "texture_00.png")
@@ -117,8 +120,9 @@ def test_cdi3_uses_the_standard_parameter_ids_and_groups():
 
 def test_rig_spec_only_mentions_existing_layers_and_parameters():
     spec = rig_build.rig_spec()
-    layers = {"backing", "head", "body", "eye_L", "eye_R", "eyes_closed", "mouth_open",
-              "eye_mask_L", "eye_mask_R"}
+    layers = ({"backing", "head", "body", "eye_L", "eye_R", "eyes_closed", "mouth_open",
+               "eye_mask_L", "eye_mask_R"}
+              | {f"expr_{name}" for name in rig_build.EXPRESSIONS})
     parameters = {entry["Id"] for entry in rig_build.cdi3()["Parameters"]}
     deformers = {entry["id"] for entry in spec["deformers"]}
 

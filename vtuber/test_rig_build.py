@@ -17,7 +17,9 @@ def test_layers_rebuild_the_original_picture():
     """head + body + cele două irise trebuie să dea `idle.png` la pixel."""
     layers = build_layers()
     rebuilt = composite(layers)
-    original = Image.open(ASSETS / "idle.png").convert("RGBA")
+    original = Image.fromarray(
+        rig_build.despill(np.asarray(Image.open(ASSETS / "idle.png").convert("RGBA")).astype(np.uint8)),
+        "RGBA")
     assert np.sqrt((difference(rebuilt, original) ** 2).mean()) < 1.0
 
 
@@ -79,7 +81,16 @@ def test_sidecars_reference_the_moc3_and_the_parameters():
     assert groups["LipSync"] == ["ParamMouthOpenY"]
     ids = {entry["Id"] for entry in display["Parameters"]}
     assert {"ParamAngleX", "ParamMouthOpenY", "ParamEyeBallX"} <= ids
-    assert set(written) == {"izentric.model3.json", "izentric.cdi3.json", "izentric.rigspec.json"}
+    expected = {"izentric.model3.json", "izentric.cdi3.json", "izentric.rigspec.json"}
+    expected |= {f"izentric.{name}.exp3.json" for name in rig_build.EXPRESSIONS}
+    assert set(written) == expected
+    # fiecare expresie: exact un parametru pe 1, celelalte pe 0
+    for name in rig_build.EXPRESSIONS:
+        payload = json.loads((OUT / f"izentric.{name}.exp3.json").read_text(encoding="utf-8"))
+        values = {entry["Id"]: entry["Value"] for entry in payload["Parameters"]}
+        assert values[f"ParamExpr{name.capitalize()}"] == 1.0
+        assert sum(1 for value in values.values() if value == 1.0) == 1
+        assert payload["Type"] == "Live2D Expression"
 
 
 def flatten(layers, visible_only=False):
@@ -118,7 +129,9 @@ def test_psd_round_trip_keeps_the_layers():
             image.putalpha(ImageChops.multiply(image.getchannel("A"),
                                                top[mask_name].topil().convert("RGBA").getchannel("A")))
         rebuilt.alpha_composite(image)
-    original = Image.open(ASSETS / "idle.png").convert("RGBA")
+    original = Image.fromarray(
+        rig_build.despill(np.asarray(Image.open(ASSETS / "idle.png").convert("RGBA")).astype(np.uint8)),
+        "RGBA")
     assert np.sqrt((difference(rebuilt, original) ** 2).mean()) < 1.0
 
 
@@ -170,6 +183,38 @@ def test_nothing_eye_coloured_under_the_eye_when_the_gaze_moves():
             assert all(dark == 0 for dark, _ in got.values()), f"pixeli întunecați sub pleoapă: {got}"
 
 
+def test_each_expression_reproduces_its_own_drawing():
+    """Expresia pornită la 100 % trebuie să dea poza ei pe față (ochi, gură, obraji)."""
+    import rig_preview
+
+    layers = build_layers()
+    face = (slice(340, 560), slice(120, 930))
+    for name in rig_build.EXPRESSIONS:
+        reference = np.asarray(Image.open(ASSETS / f"{name}.png").convert("RGB"), dtype=float)
+        got = np.asarray(rig_preview.render(layers, expressions={name: 1.0}).convert("RGB"), dtype=float)
+        diff = np.abs(got - reference).max(axis=2)[face]
+        # Limita: părul și conturul siluetei rămân din poza de repaus (desenul fiecărei
+        # stări are fire de păr și contur puțin altfel), deci nu se poate cere identitate
+        # pe tot ovalul — se cere ca fața să fie a expresiei, nu a repausului.
+        face_rms = float(np.sqrt((diff ** 2).mean()))
+        assert face_rms < 15.0, f"{name}: fața nu seamănă (rms {face_rms:.2f})"
+        assert (diff > 120).sum() < 700, f"{name}: {int((diff > 120).sum())} pixeli foarte diferiți pe față"
+        # și, ca dovadă că expresia chiar s-a schimbat: fața trebuie să difere de repaus
+        idle_face = np.asarray(Image.open(ASSETS / "idle.png").convert("RGB"), dtype=float)[face]
+        assert float(np.abs(got[face] - idle_face).max(axis=2).mean()) > 8.0, f"{name}: expresia nu se vede"
+
+
+def test_expressions_do_not_touch_the_body_or_the_hair():
+    """Haina și părul rămân din poza de repaus — altfel expresia ar schimba corpul."""
+    layers = build_layers()
+    idle = np.asarray(Image.open(ASSETS / "idle.png").convert("RGBA"))
+    for name in rig_build.EXPRESSIONS:
+        alpha = np.asarray(layers[f"expr_{name}"].getchannel("A")) > 24
+        body = alpha[700:1024, 120:930].sum()      # sub guler: haina
+        assert body == 0, f"{name}: atinge haina ({int(body)} pixeli)"
+        assert alpha.sum() > 5000, f"{name}: expresia e goală"
+
+
 def test_pack_contains_everything_needed_to_rig():
     """Un singur fișier de descărcat: dacă lipsește ceva din el, omul se blochează."""
     import zipfile
@@ -209,5 +254,7 @@ def test_neck_keeps_the_drawn_pixels_and_invents_nothing():
     alpha = head[band, :, 3]
     painted = alpha > 8
     assert painted.sum() > 500, "gâtul lipsește din stratul de cap"
-    different = np.abs(head[band, :, :3] - art[band, :, :3]).max(axis=2)[painted]
+    # referința e poza curățată de conturul verde (vezi rig_build.despill)
+    clean = rig_build.despill(np.asarray(Image.open(ASSETS / "idle.png").convert("RGBA")).astype(np.uint8))
+    different = np.abs(head[band, :, :3] - clean[band, :, :3].astype(int)).max(axis=2)[painted]
     assert different.max() == 0, f"{int((different > 0).sum())} pixeli din gât nu sunt cei desenați"

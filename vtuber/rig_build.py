@@ -42,6 +42,42 @@ def _load(name: str, assets: Path = ASSETS) -> Image.Image:
     return Image.open(Path(assets) / name).convert("RGBA")
 
 
+def despill(pixels: np.ndarray) -> np.ndarray:
+    """Scoate conturul verde de 1 px de pe siluetă (rămășiță de la decuparea pozelor).
+
+    Pixelii verzi se înlocuiesc cu media vecinilor care nu sunt verzi, de aproape în
+    aproape, până nu mai rămâne nici unul. Altfel conturul se vede pe marginea părului,
+    mai ales când stratul e rotit (interpolarea îl amestecă în personaj).
+    """
+    out = pixels.astype(np.float32)
+    rgb = out[..., :3]
+    # prag mic: pe lângă conturul verde aprins au rămas și pixeli verde-închis în păr
+    green = (rgb[..., 1] > rgb[..., 0] + 20) & (rgb[..., 1] > rgb[..., 2] + 20)
+    green &= pixels[..., 3] > 0
+    if not green.any():
+        return pixels
+    # sursă de culoare: doar vecini opaci (haltă de anti-aliasing e aproape transparentă)
+    fixed = ~green & (pixels[..., 3] > 200)
+    for _ in range(10):
+        if not green.any():
+            break
+        total = np.zeros_like(rgb)
+        count = np.zeros(green.shape, dtype=np.float32)
+        for dy, dx in ((-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)):
+            shifted_mask = np.roll(np.roll(fixed, dy, axis=0), dx, axis=1)
+            shifted_rgb = np.roll(np.roll(rgb, dy, axis=0), dx, axis=1)
+            total += shifted_rgb * shifted_mask[..., None]
+            count += shifted_mask
+        ready = green & (count > 0)
+        if not ready.any():
+            break
+        rgb[ready] = (total[ready] / count[ready][:, None])
+        fixed |= ready
+        green &= ~ready
+    out[..., :3] = rgb
+    return np.clip(out, 0, 255).astype(np.uint8)
+
+
 def _components(mask: np.ndarray, min_area: int = 200) -> np.ndarray:
     remaining = mask.copy()
     kept = np.zeros_like(mask)
@@ -85,6 +121,18 @@ def _fill_holes(mask: np.ndarray) -> np.ndarray:
     return ~outside
 
 
+# Expresiile: pozele tale de stare, legate pe câte un parametru propriu (0..1 -> opacitate).
+# Din fiecare se ia DOAR fața (piele, ochi, gură) și decorațiunile plutitoare (inimi,
+# scânteieri, lacrimi) — haina și părul rămân din poza de repaus, altfel s-ar schimba
+# corpul când schimbi expresia.
+EXPRESSIONS = {
+    "laugh": ("laugh.png", "ParamExprLaugh", "Râs"),
+    "love": ("love.png", "ParamExprLove", "Îndrăgostit"),
+    "sad": ("sad.png", "ParamExprSad", "Trist"),
+    "shocked": ("shocked.png", "ParamExprShocked", "Șocat"),
+    "sus": ("sus.png", "ParamExprSus", "Suspicios"),
+}
+
 IRIS_CIRCLES = {"L": (410, 427, 52), "R": (607, 424, 52)}  # măsurate pe idle.png; se pot da cu --iris
 
 
@@ -110,6 +158,46 @@ def _dilate(mask: np.ndarray, radius: int) -> np.ndarray:
     size = 2 * radius + 1
     grown = Image.fromarray(mask.astype(np.uint8) * 255, "L").filter(ImageFilter.MaxFilter(size))
     return np.asarray(grown) > 0
+
+
+def _small_marks(mask: np.ndarray, max_area: int = 3000, min_fill: float = 0.30,
+                 max_height: int = 120) -> np.ndarray:
+    """Pete mici și compacte (stropi de sudoare, lacrimi, semne) — nu dâre de contur.
+
+    Diferența dintre două poze are și linii subțiri pe siluetă (conturul e desenat puțin
+    altfel); alea NU trebuie copiate, altfel apare o dâră pe păr. Un strop e mic, plin și
+    scund, deci se recunoaște după umplutura din dreptunghi.
+    """
+    from collections import deque
+
+    kept = np.zeros_like(mask)
+    seen = np.zeros_like(mask)
+    height, width = mask.shape
+    for y0, x0 in zip(*np.nonzero(mask)):
+        if seen[y0, x0]:
+            continue
+        queue = deque([(y0, x0)])
+        seen[y0, x0] = True
+        points = []
+        while queue:
+            y, x = queue.popleft()
+            points.append((y, x))
+            for dy in (-1, 0, 1):
+                for dx in (-1, 0, 1):
+                    ny, nx = y + dy, x + dx
+                    if 0 <= ny < height and 0 <= nx < width and mask[ny, nx] and not seen[ny, nx]:
+                        seen[ny, nx] = True
+                        queue.append((ny, nx))
+        area = len(points)
+        if area > max_area:
+            continue
+        ys = [point[0] for point in points]
+        xs = [point[1] for point in points]
+        box = (max(xs) - min(xs) + 1) * (max(ys) - min(ys) + 1)
+        if area / box >= min_fill and (max(ys) - min(ys)) <= max_height:
+            for y, x in points:
+                kept[y, x] = True
+    return kept
 
 
 def iris_blob(pixels: np.ndarray, circle: tuple[int, int, int]) -> np.ndarray:
@@ -285,7 +373,7 @@ def build_layers(
     """Straturile finale, toate pe același canvas 1024×1024."""
     source = source or _load("idle.png", assets)
     width, height = source.size
-    pixels = np.asarray(source).astype(np.uint8)
+    pixels = despill(np.asarray(source).astype(np.uint8))
 
     circles = circles or IRIS_CIRCLES
     # Globul ocular: un singur strat cu TOT ochiul desenat (albul + irisul + reflexele),
@@ -361,17 +449,51 @@ def build_layers(
     # pleoapele închise: diferența dintre blink și idle
     from puppet import difference_mask
 
-    blink = _load("blink.png", assets)
-    talking = _load("talking.png", assets)
+    blink = Image.fromarray(despill(np.asarray(_load("blink.png", assets)).astype(np.uint8)), "RGBA")
+    talking = Image.fromarray(despill(np.asarray(_load("talking.png", assets)).astype(np.uint8)), "RGBA")
     # Pleoapele și gura: se DECUPEAZĂ zona lor (nu „diferența" estompată), ca la opacitate
     # maximă să acopere complet. Cu marginea estompată rămânea urma ochiului deschis dedesubt
     # („ochi sub ochi") și se vedea șters.
     # zona pleoapelor = exact ce se schimbă între deschis și închis (pleoapa + genele),
     # nu o elipsă: elipsa lăsa conturul ochiului deschis pe dinafară
-    eye_zone = _dilate(np.asarray(difference_mask(source, blink)) > 40, 7)
-    mouth_zone = _dilate(np.asarray(difference_mask(source, talking)) > 40, 7)
+    # zona pleoapelor: doar în interiorul ochilor (diferența dintre poze mai apare și pe
+    # siluetă, fiindcă fiecare desen are conturul puțin altfel — aia nu e pleoapă)
+    eye_area = np.zeros(pixels.shape[:2], dtype=bool)
+    for side in ("L", "R"):
+        eye_area |= np.asarray(Image.fromarray(ellipses[side].astype(np.uint8) * 255, "L")
+                               .filter(ImageFilter.MaxFilter(21))) > 0
+    eye_zone = _dilate(np.asarray(difference_mask(source, blink)) > 40, 7) & eye_area
+    mouth_area = np.zeros(pixels.shape[:2], dtype=bool)
+    mouth_area[430:640, 380:660] = True
+    mouth_zone = _dilate(np.asarray(difference_mask(source, talking)) > 40, 7) & mouth_area
     layers["eyes_closed"] = _patch(blink, eye_zone)
     layers["mouth_open"] = _patch(talking, mouth_zone)
+
+    # Expresiile. Fața = piele + ochi + gură (dilatate); decorațiunile = bucățile desenate
+    # care nu fac parte din personaj (inimi, scânteieri, lacrimi, stropi).
+    ellipses = eye_mask_masks(source.size, circles)
+    # doar piele + ochi + gură: dacă dilatarea intră în păr, se vede conturul părului din
+    # poza expresiei ca o dâră peste părul din poza de repaus
+    face_zone = _dilate(skin, 2) | ellipses["L"] | ellipses["R"] | _dilate(mouth_zone, 2)
+    for name, (file, _param, _label) in EXPRESSIONS.items():
+        state_pixels = despill(np.asarray(_load(file, assets)).astype(np.uint8))
+        visible = state_pixels[..., 3] > 24
+        body_parts = _components(visible, min_area=20000)     # personajul, dintr-o bucată
+        decor = visible & ~body_parts                          # ce plutește în jur
+        decor &= np.arange(pixels.shape[0])[:, None] < CUT_Y    # dar nu sub guler
+        diff = np.abs(state_pixels[..., :3].astype(int) - pixels[..., :3].astype(int)).max(axis=2) > 40
+        # nu atingem conturul personajului: silueta stă din poza de repaus, altfel rămâne
+        # o linie de 1 px pe marginea fetei (desenul fiecărei stări are conturul puțin diferit)
+        inside = _erode(pixels[..., 3] > 24, 3)
+        # pe față: tot ce se schimbă; în afara feței: doar ce plutește (decor) și petele
+        # mici compacte desenate peste păr (stropi de sudoare), niciodată conturul
+        above_collar = np.arange(pixels.shape[0])[:, None] < CUT_Y
+        marks = _small_marks(diff & ~face_zone & above_collar)
+        zone = _dilate(diff, 7) & ((face_zone & inside) | decor | marks) & visible
+        layer = np.zeros_like(state_pixels)
+        layer[zone] = state_pixels[zone]
+        layer[zone, 3] = 255
+        layers[f"expr_{name}"] = Image.fromarray(layer, "RGBA")
     return layers
 
 
@@ -458,6 +580,8 @@ def composite(layers: dict[str, Image.Image], order: list[str] | None = None) ->
     order = order or COMPOSITE_ORDER
     frame = Image.new("RGBA", layers[order[0]].size, (0, 0, 0, 0))
     for name in order:
+        if name in HIDDEN_BY_DEFAULT:
+            continue
         layer = layers[name]
         mask_name = CLIPPING.get(name)
         if mask_name:
@@ -476,13 +600,21 @@ GROUPS = [
     ("BACKING", True, ["backing"]),
     ("HEAD", True, ["head"]),
     ("BODY", True, ["body"]),
-    # masca stă LIPITĂ sub globul ei: așa se poate scrie clipping real în PSD, iar în editor
-    # globul nu iese din ochi (altfel s-ar vedea albul de rezervă ca un inel pe obraz)
-    ("FACE", True, ["eye_mask_R", "eye_R", "eye_mask_L", "eye_L", "mouth_open", "eyes_closed"]),
+    # FACE se scrie de sus în jos. Expresiile stau DEASUPRA globilor oculari (le acoperă
+    # ochii lor) și SUB pleoape și gură: dacă clipești sau vorbești cât timp râzi, câștigă
+    # pleoapa și gura. Masca stă lipită sub globul ei, ca clipping-ul din PSD să fie valid.
+    ("FACE", True, ["eyes_closed", "mouth_open"]
+     + [f"expr_{name}" for name in reversed(list(EXPRESSIONS))]
+     + ["eye_mask_R", "eye_R", "eye_mask_L", "eye_L"]),
 ]
 DRAW_ORDER = [name for _, _, members in reversed(GROUPS) for name in reversed(members)]
-COMPOSITE_ORDER = ["backing", "head", "eye_L", "eye_R", "body"]
-HIDDEN_BY_DEFAULT = {"eyes_closed", "mouth_open", "eye_mask_L", "eye_mask_R"}
+COMPOSITE_ORDER = (["backing", "head", "body", "eye_L", "eye_R"]
+                   + [f"expr_{name}" for name in EXPRESSIONS]
+                   + ["mouth_open", "eyes_closed"])
+# Pornesc ascunse în PSD: pleoapele, gura, măștile și toate expresiile (fiecare devine
+# vizibilă doar pe parametrul ei, în editor)
+HIDDEN_BY_DEFAULT = ({"eyes_closed", "mouth_open", "eye_mask_L", "eye_mask_R"}
+                     | {f"expr_{name}" for name in EXPRESSIONS})
 CLIPPING = {"eye_L": "eye_mask_L", "eye_R": "eye_mask_R"}
 
 
@@ -554,6 +686,9 @@ PARAMETERS = [
     ("ParamBreath", "ParamGroupBody", "Respirație", 0, 1, 0),
     ("ParamHairFront", "ParamGroupSway", "Șuvițe față", -1, 1, 0),
     ("ParamString", "ParamGroupSway", "Șnururi glugă", -1, 1, 0),
+] + [
+    (param, "ParamGroupExpressions", label, 0, 1, 0)
+    for _name, (_file, param, label) in EXPRESSIONS.items()
 ]
 
 PARAMETER_GROUPS = [
@@ -564,6 +699,7 @@ PARAMETER_GROUPS = [
     ("ParamGroupMouth", "Gură"),
     ("ParamGroupBody", "Corp"),
     ("ParamGroupSway", "Fizică"),
+    ("ParamGroupExpressions", "Expresii"),
 ]
 
 
@@ -574,6 +710,10 @@ def model3(texture: str = "texture_00.png") -> dict:
             "Moc": "izentric.moc3",
             "Textures": [texture],
             "DisplayInfo": "izentric.cdi3.json",
+            "Expressions": [
+                {"Name": label, "File": f"izentric.{name}.exp3.json"}
+                for name, (_file, _param, label) in EXPRESSIONS.items()
+            ],
         },
         "Groups": [
             {"Target": "Parameter", "Name": "LipSync", "Ids": ["ParamMouthOpenY"]},
@@ -625,7 +765,8 @@ def rig_spec() -> dict:
                 "id": "D_HeadWarp",
                 "type": "warp",
                 "parent": "D_HeadRot",
-                "layers": ["head", "eye_L", "eye_R", "eyes_closed", "mouth_open"],
+                "layers": ["head", "eye_L", "eye_R", "eyes_closed", "mouth_open"]
+                + [f"expr_{name}" for name in EXPRESSIONS],
                 "pivot": [512, 430],
                 "parameters": ["ParamAngleX", "ParamAngleY"],
             },
@@ -677,12 +818,40 @@ def rig_spec() -> dict:
                 {"value": 0, "deformer": "D_Body", "translate": [0, 0]},
                 {"value": 1, "deformer": "D_Body", "translate": [0, -3]},
             ],
+            **{
+                param: [
+                    {"value": 0, "layer": f"expr_{name}", "opacity": 0},
+                    {"value": 1, "layer": f"expr_{name}", "opacity": 100},
+                ]
+                for name, (_file, param, _label) in EXPRESSIONS.items()
+            },
         },
+        "expressions": [
+            {"name": name, "parameter": param, "label": label, "file": f"izentric.{name}.exp3.json"}
+            for name, (_file, param, label) in EXPRESSIONS.items()
+        ],
         "notes": [
             "eyes_closed și mouth_open se pot lega și pe opacitate (mai simplu) sau pe clipping (mai curat).",
             "eye_L / eye_R au nevoie de clipping pe eye_mask_L / eye_mask_R, altfel iese ochiul din gene.",
             "Sprâncenele sunt desenate în cap: ParamBrowLY/RY există în cdi3, dar nu au ce mișca până nu sunt pe strat separat.",
         ],
+    }
+
+
+def expression_file(target: str) -> dict:
+    """Un fișier .exp3: pune expresia cerută pe 1 și pe toate celelalte pe 0.
+
+    Formatul e cel din Cubism (Type + Parameters cu Id/Value/Blend + timpii de fade), la fel
+    cum îl citește VTube Studio când le încarcă din model3.json.
+    """
+    return {
+        "Type": "Live2D Expression",
+        "Parameters": [
+            {"Id": param, "Value": 1.0 if name == target else 0.0, "Blend": "Overwrite"}
+            for name, (_file, param, _label) in EXPRESSIONS.items()
+        ],
+        "FadeInTime": 0.2,
+        "FadeOutTime": 0.2,
     }
 
 
@@ -698,10 +867,16 @@ def write_sidecars(directory: Path, texture: str = "texture_00.png") -> dict[str
         path = directory / name
         path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
         written[name] = path
+    for name in EXPRESSIONS:
+        payload = expression_file(name)
+        path = directory / f"izentric.{name}.exp3.json"
+        path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+        written[path.name] = path
     return written
 
 
-PACK_FILES = ("izentric.psd", "izentric.rigspec.json", "izentric.model3.json", "izentric.cdi3.json", "GATA-DE-RIGAT.txt")
+PACK_FILES = (("izentric.psd", "izentric.rigspec.json", "izentric.model3.json", "izentric.cdi3.json",
+               "GATA-DE-RIGAT.txt") + tuple(f"izentric.{name}.exp3.json" for name in EXPRESSIONS))
 
 
 def write_pack(directory: Path = OUT, name: str = "izentric-pack.zip") -> Path:
