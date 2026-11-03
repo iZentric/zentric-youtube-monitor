@@ -28,7 +28,7 @@ OUT = HERE / "rig"
 CUT_Y = 655          # linia gulerului, măsurată pe idle.png
 HEAD_BLEED = 100     # cât coboară gâtul sub linia gulerului (gâtul se termină la ~y 700)
 BODY_BLEED = 20      # cât urcă trupul sub cap
-IRIS_FEATHER = 0  # margine tare: whitening-ul din cap acoperă exact discul, deci reconstrucția e la pixel
+IRIS_FEATHER = 0  # margine tare: albul de sub iris e difuzie, nu un disc desenat  # margine estompată: irisul alunecă peste alb fără un cerc vizibil
 
 
 def skin_mask(image: Image.Image) -> np.ndarray:
@@ -88,6 +88,120 @@ def _fill_holes(mask: np.ndarray) -> np.ndarray:
 IRIS_CIRCLES = {"L": (410, 427, 52), "R": (607, 424, 52)}  # măsurate pe idle.png; se pot da cu --iris
 
 
+def _blob_at(mask: np.ndarray, seed: tuple[int, int]) -> np.ndarray:
+    """Componenta din `mask` care conține punctul `seed` (BFS, fără dependențe)."""
+    height, width = mask.shape
+    out = np.zeros_like(mask)
+    stack = [seed]
+    if not mask[seed[1], seed[0]]:
+        return out
+    out[seed[1], seed[0]] = True
+    while stack:
+        x, y = stack.pop()
+        for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+            if 0 <= nx < width and 0 <= ny < height and mask[ny, nx] and not out[ny, nx]:
+                out[ny, nx] = True
+                stack.append((nx, ny))
+    return out
+
+
+def _dilate(mask: np.ndarray, radius: int) -> np.ndarray:
+    """Lărgește o mască cu `radius` pixeli (MaxFilter cere rază impară)."""
+    size = 2 * radius + 1
+    grown = Image.fromarray(mask.astype(np.uint8) * 255, "L").filter(ImageFilter.MaxFilter(size))
+    return np.asarray(grown) > 0
+
+
+def iris_blob(pixels: np.ndarray, circle: tuple[int, int, int]) -> np.ndarray:
+    """Forma irisului desenat, nu un cerc ghicit.
+
+    Irisul e singura zonă *colorată* din ochi (albastru închis / roșu închis), în timp ce
+    genele și conturul sunt gri neutru. De aceea se caută saturația, nu întunericul —
+    altfel pleoapa intră în formă și se mănâncă umbra de sub ea.
+    """
+    cx, cy, radius = circle
+    height, width = pixels.shape[:2]
+    ys, xs = np.mgrid[0:height, 0:width]
+    near = (xs - cx) ** 2 + (ys - cy) ** 2 <= (radius * 1.45) ** 2
+    rgb = pixels[..., :3].astype(np.int16)
+    sat = rgb.max(axis=2) - rgb.min(axis=2)
+    luminance = rgb.astype(np.float32).mean(axis=2)
+    # pielea e și ea saturată (portocaliu), deci se scoate explicit; irisul e și închis
+    skin = skin_mask(Image.fromarray(pixels[..., :3], "RGB"))
+    colored = near & (sat > 22) & (luminance < 190) & ~skin
+    blob = _blob_at(colored, (cx, cy))
+    if blob.sum() < 400:
+        return ((xs - cx) ** 2 + (ys - cy) ** 2 <= radius**2)
+    return blob
+
+
+def iris_mask_with_outline(pixels: np.ndarray, blob: np.ndarray, grow: int = 3) -> np.ndarray:
+    """Irisul plus conturul lui întunecat.
+
+    Blobul colorat nu prinde și conturul negru din jur; dacă l-am lăsa în cap, la mutare
+    dispare conturul și apare un halou alb. Se adaugă deci inelul închis, neutru, lipit
+    de iris — fără să intre și albul ochiului.
+    """
+    rgb = pixels[..., :3].astype(np.int16)
+    luminance = rgb.astype(np.float32).mean(axis=2)
+    sat = rgb.max(axis=2) - rgb.min(axis=2)
+    dark_neutral = (luminance < 130) & (sat < 35)
+    ring = _dilate(blob, grow) & dark_neutral
+    mask = blob | ring
+    # închidere morfologică mare: conturul desenat e anti-aliat, deci iese punctat;
+    # altfel rămâne o linie punctată vizibilă când irisul se mișcă
+    step = Image.fromarray(mask.astype(np.uint8) * 255, "L")
+    step = step.filter(ImageFilter.MaxFilter(7)).filter(ImageFilter.MinFilter(7))
+    closed = np.asarray(step) > 0
+    # găurile din interior (reflexe, puncte deschise) se umplu
+    from PIL import ImageDraw
+
+    filled = Image.fromarray((closed).astype(np.uint8) * 255, "L").copy()
+    ImageDraw.floodfill(filled, (0, 0), 128)
+    holes = np.asarray(filled) == 0
+    return closed | holes
+
+
+def eye_white(pixels: np.ndarray, blob: np.ndarray, grow: int = 3, iterations: int = 2000) -> np.ndarray:
+    """Albul ochiului, reconstruit prin difuzie în locul irisului.
+
+    Nu se vopsește un disc cu o culoare medie (ieșea un cerc vizibil, se vedea urât).
+    Se rezolvă o umplere armonică: fiecare pixel din zonă devine media vecinilor, iar
+    marginea rămâne exact culoarea desenului. Rezultatul continuă natural umbra de sub
+    pleoapă și albul din colțuri, fără cusătură — pentru că atinge marginea cu aceeași
+    culoare pe care o are desenul acolo.
+    """
+    from PIL import Image as PILImage
+
+    region = np.asarray(PILImage.fromarray(blob.astype(np.uint8) * 255, "L")
+                        .filter(ImageFilter.MaxFilter(2 * grow + 1))) > 0
+    ys, xs = np.nonzero(region)
+    y0, y1 = max(0, ys.min() - 2), min(pixels.shape[0], ys.max() + 3)
+    x0, x1 = max(0, xs.min() - 2), min(pixels.shape[1], xs.max() + 3)
+    area = pixels[y0:y1, x0:x1, :3].astype(np.float32)
+    fill = region[y0:y1, x0:x1]
+    work = area.copy()
+    for _ in range(iterations):
+        up = np.roll(work, 1, axis=0)
+        down = np.roll(work, -1, axis=0)
+        left = np.roll(work, 1, axis=1)
+        right = np.roll(work, -1, axis=1)
+        work = np.where(fill[..., None], (up + down + left + right) * 0.25, area)
+    # În interior se pune EXCLUSIV difuzia (altfel rămâne 50% din conturul irisului și
+    # apare o linie punctată), iar estomparea se face doar în afara zonei, pe 2 px.
+    blur = np.asarray(PILImage.fromarray(fill.astype(np.uint8) * 255, "L")
+                      .filter(ImageFilter.GaussianBlur(2.5))).astype(np.float32) / 255.0
+    # netezire în interiorul zonei: difuzia pe o margine zimțată lasă dungi verticale
+    smoothed = np.asarray(PILImage.fromarray(np.clip(work, 0, 255).astype(np.uint8), "RGB")
+                          .filter(ImageFilter.GaussianBlur(1.2))).astype(np.float32)
+    work = np.where(fill[..., None], smoothed, work)
+    weight = np.where(fill, 1.0, 0.0)[..., None]   # interior = difuzie curată, fără amestec
+    blended = area * (1 - weight) + np.clip(work, 0, 255) * weight
+    out = pixels.copy()
+    out[y0:y1, x0:x1, :3] = np.clip(blended, 0, 255).astype(np.uint8)
+    return out
+
+
 def iris_masks(size: tuple[int, int], circles: dict[str, tuple[int, int, int]] | None = None):
     """Măști circulare pentru irise.
 
@@ -130,23 +244,27 @@ def build_layers(
     width, height = source.size
     pixels = np.asarray(source).astype(np.uint8)
 
-    left, right = iris_masks(source.size, circles)
+    seeds = circles or IRIS_CIRCLES
+    blobs = {side: iris_mask_with_outline(pixels, iris_blob(pixels, seeds[side])) for side in ("L", "R")}
+    left, right = blobs["L"], blobs["R"]
+    fitted = {side: (seeds[side][0], seeds[side][1],
+                     int(round(max(np.ptp(np.nonzero(blobs[side])[1]),
+                                   np.ptp(np.nonzero(blobs[side])[0])) / 2)))
+              for side in ("L", "R")}
     iris_zone = left | right
 
-    # capul: irisul scos și înlocuit cu albul ochiului, ca irisul mutat să nu lase urmă
-    if iris_zone.any():
-        white = np.array([248, 250, 252], dtype=np.uint8)
-        no_iris = pixels.copy()
-        no_iris[iris_zone, :3] = white
-    else:
-        no_iris = pixels.copy()
-    head_source = Image.fromarray(no_iris, "RGBA")
-
+    # capul: irisul scos și înlocuit cu albul ochiului, cu umbra luată din jur — altfel,
+    # când irisul se mută, rămâne în urmă un disc alb plat (se vedea urât)
+    no_iris = pixels.copy()
+    for side in ("L", "R"):
+        # se șterge EXACT forma irisului: la repaus compunerea iese identică cu desenul,
+        # iar la mișcare în urmă rămâne albul ochiului, nu o verigă
+        no_iris = eye_white(no_iris, blobs[side], grow=2)
     # capul: tot ce e deasupra gulerului + gâtul (doar pielea) din banda de sub el.
     # Gulerul rămâne la trup, deci la rotire capul ia gâtul cu el și gulerul stă pe loc.
     skin = skin_mask(source)
     head_pixels = np.zeros_like(pixels)
-    head_pixels[:CUT_Y] = pixels[:CUT_Y]
+    head_pixels[:CUT_Y] = no_iris[:CUT_Y]        # fără iris: irisul e strat separat, mișcabil
     band = slice(CUT_Y, min(height, CUT_Y + HEAD_BLEED))
     # Gâtul se lățește și coboară adânc sub guler, vopsit în culoarea pielii. Gulerul
     # (stratul de trup, desenat deasupra) îl acoperă, deci nu se vede; dar la rotație
@@ -169,7 +287,7 @@ def build_layers(
     body_pixels[start:] = np.where((~skin[start:])[..., None], pixels[start:], 0)
     body = Image.fromarray(body_pixels, "RGBA")
 
-    eye_masks = eye_mask_masks(source.size, circles)
+    eye_masks = eye_mask_masks(source.size, fitted)
     layers: dict[str, Image.Image] = {"head": head, "body": body}
     backing = backplate(body, head)
     if backing is not None:

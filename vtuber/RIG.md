@@ -145,3 +145,31 @@ compară ordinea citită din PSD cu `DRAW_ORDER`, deci nu mai pot diverge.
 Comparație cu modelele oficiale (`python vtuber/reference_diff.py`, Haru/Hiyori/Mao):
 **0 parametri inventați**, toate cele 16 ID-uri sunt standard; 170 de parametri standard
 lipsesc (brațe, păr, fizică, cele 5 vocale) — exact lucrurile care cer artă separată.
+
+## Ochiul care se uită în altă parte
+
+Problema raportată: când irisul se mută, în urmă se vedea urât. Cauza nu era un singur
+lucru, ci trei, toate măsurate:
+
+1. **Irisul nu era decupat pe desen** — se folosea un disc ghicit (rază 52) în loc de forma
+   reală. Irisul din desen are 105 px lățime la ochiul albastru și 86 px la cel roșu, deci
+   rămânea o verigă de iris în cap. Acum forma se ia din saturație (`iris_blob`), iar
+   conturul închis al irisului se adaugă explicit (`iris_mask_with_outline`).
+2. **Albul ochiului era vopsit cu o culoare plată** `[248,250,252]`, deci apărea un disc
+   alb vizibil. Acum se rezolvă o umplere armonică (`eye_white`): fiecare pixel devine
+   media vecinilor, marginea rămâne culoarea desenului → umbra de sub pleoapă continuă
+   natural, fără cusătură.
+3. **Capul se construia din desenul original**, nu din imaginea cu irisul scos — un bug de
+   o linie (`head_pixels[:CUT_Y] = pixels[:CUT_Y]`), din cauza căruia tot efortul de
+   ștergere a irisului se pierdea. Acum folosește imaginea curățată.
+
+Verificat (`vtuber/test_rig_build.py`):
+
+| măsurătoare | rezultat |
+|---|---|
+| culoare de iris rămasă în cap | **2 px** dintr-un iris de ~9 000 |
+| zona descoperită la privire maximă | luminanță medie **186**, abatere **54** (nu e plată) |
+| pixeli întunecați rămași în urmă | **0** |
+| cadru de repaus vs `idle.png` | rms **1,17** (doar 1-2 px la marginea irisului) |
+
+Comparație vizuală: `vtuber/rig/eye-before-after.png` (stânga înainte, dreapta după).
