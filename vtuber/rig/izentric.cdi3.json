@@ -4,92 +4,107 @@
     {
       "Id": "ParamAngleX",
       "GroupId": "ParamGroupFace",
-      "Name": "ParamAngleX"
+      "Name": "Unghi cap X"
     },
     {
       "Id": "ParamAngleY",
       "GroupId": "ParamGroupFace",
-      "Name": "ParamAngleY"
+      "Name": "Unghi cap Y"
     },
     {
       "Id": "ParamAngleZ",
       "GroupId": "ParamGroupFace",
-      "Name": "ParamAngleZ"
-    },
-    {
-      "Id": "ParamBodyAngleX",
-      "GroupId": "ParamGroupBody",
-      "Name": "ParamBodyAngleX"
-    },
-    {
-      "Id": "ParamBodyAngleZ",
-      "GroupId": "ParamGroupBody",
-      "Name": "ParamBodyAngleZ"
+      "Name": "Unghi cap Z"
     },
     {
       "Id": "ParamEyeLOpen",
       "GroupId": "ParamGroupEyes",
-      "Name": "ParamEyeLOpen"
+      "Name": "Ochi stâng deschis"
     },
     {
       "Id": "ParamEyeROpen",
       "GroupId": "ParamGroupEyes",
-      "Name": "ParamEyeROpen"
+      "Name": "Ochi drept deschis"
     },
     {
       "Id": "ParamEyeBallX",
-      "GroupId": "ParamGroupEyes",
-      "Name": "ParamEyeBallX"
+      "GroupId": "ParamGroupEyeballs",
+      "Name": "Privire X"
     },
     {
       "Id": "ParamEyeBallY",
-      "GroupId": "ParamGroupEyes",
-      "Name": "ParamEyeBallY"
+      "GroupId": "ParamGroupEyeballs",
+      "Name": "Privire Y"
+    },
+    {
+      "Id": "ParamBrowLY",
+      "GroupId": "ParamGroupBrows",
+      "Name": "Sprânceană stânga sus"
+    },
+    {
+      "Id": "ParamBrowRY",
+      "GroupId": "ParamGroupBrows",
+      "Name": "Sprânceană dreapta sus"
     },
     {
       "Id": "ParamMouthOpenY",
       "GroupId": "ParamGroupMouth",
-      "Name": "ParamMouthOpenY"
+      "Name": "Gură deschisă"
+    },
+    {
+      "Id": "ParamMouthForm",
+      "GroupId": "ParamGroupMouth",
+      "Name": "Formă gură"
+    },
+    {
+      "Id": "ParamBodyAngleX",
+      "GroupId": "ParamGroupBody",
+      "Name": "Unghi corp X"
+    },
+    {
+      "Id": "ParamBodyAngleZ",
+      "GroupId": "ParamGroupBody",
+      "Name": "Unghi corp Z"
     },
     {
       "Id": "ParamBreath",
       "GroupId": "ParamGroupBody",
-      "Name": "ParamBreath"
+      "Name": "Respirație"
     },
     {
-      "Id": "ParamHairSwayX",
-      "GroupId": "ParamGroupHair",
-      "Name": "ParamHairSwayX"
+      "Id": "ParamHairFront",
+      "GroupId": "ParamGroupSway",
+      "Name": "Șuvițe față"
     },
     {
-      "Id": "ParamHornsVis",
-      "GroupId": "ParamGroupAccessories",
-      "Name": "ParamHornsVis"
+      "Id": "ParamString",
+      "GroupId": "ParamGroupSway",
+      "Name": "Șnururi glugă"
     },
     {
       "Id": "ParamExprLaugh",
       "GroupId": "ParamGroupExpressions",
-      "Name": "ParamExprLaugh"
+      "Name": "Râs"
     },
     {
       "Id": "ParamExprLove",
       "GroupId": "ParamGroupExpressions",
-      "Name": "ParamExprLove"
+      "Name": "Îndrăgostit"
     },
     {
       "Id": "ParamExprSad",
       "GroupId": "ParamGroupExpressions",
-      "Name": "ParamExprSad"
+      "Name": "Trist"
     },
     {
       "Id": "ParamExprShocked",
       "GroupId": "ParamGroupExpressions",
-      "Name": "ParamExprShocked"
+      "Name": "Șocat"
     },
     {
       "Id": "ParamExprSus",
       "GroupId": "ParamGroupExpressions",
-      "Name": "ParamExprSus"
+      "Name": "Suspicios"
     }
   ],
   "ParameterGroups": [
@@ -101,7 +116,17 @@
     {
       "Id": "ParamGroupEyes",
       "GroupId": "",
-      "Name": "Ochi"
+      "Name": "Ochii deschiși închiși"
+    },
+    {
+      "Id": "ParamGroupEyeballs",
+      "GroupId": "",
+      "Name": "Glob ocular"
+    },
+    {
+      "Id": "ParamGroupBrows",
+      "GroupId": "",
+      "Name": "Sprâncene"
     },
     {
       "Id": "ParamGroupMouth",
@@ -114,14 +139,9 @@
       "Name": "Corp"
     },
     {
-      "Id": "ParamGroupHair",
+      "Id": "ParamGroupSway",
       "GroupId": "",
-      "Name": "Păr"
-    },
-    {
-      "Id": "ParamGroupAccessories",
-      "GroupId": "",
-      "Name": "Accesorii"
+      "Name": "Fizică"
     },
     {
       "Id": "ParamGroupExpressions",
@@ -129,14 +149,5 @@
       "Name": "Expresii"
     }
   ],
-  "Parts": [
-    {
-      "Id": "PartCap",
-      "Name": "Cap"
-    },
-    {
-      "Id": "PartCorp",
-      "Name": "Corp"
-    }
-  ]
+  "Parts": []
 }

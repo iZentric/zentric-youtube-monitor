@@ -17,7 +17,7 @@ RIG = HERE / "rig"
 W = H = 1024
 
 
-def _frame(moc: Moc3, atlas: Image.Image, values: dict[str, float]) -> Image.Image:
+def _frame(moc: Moc3, atlas: Image.Image, values: dict[str, float], scale: int = 3) -> Image.Image:
     meta = moc.parameters()
     params = [p["id"] for p in meta]
     defaults = {p["id"]: p["default"] for p in meta}      # ce face modelul când nu i se spune nimic
@@ -73,35 +73,45 @@ def _frame(moc: Moc3, atlas: Image.Image, values: dict[str, float]) -> Image.Ima
         meshes.append((order[f], opac[f], verts, uv, indices, idx_begin[k], k))
     meshes.sort(key=lambda m: m[0])
 
-    return _draw(atlas, meshes)
+    return _draw(atlas, meshes, scale)
 
 
-def _draw(atlas: Image.Image, meshes) -> Image.Image:
+def _draw(atlas: Image.Image, meshes, scale: int = 3) -> Image.Image:
     """Compune mesh-urile: fiecare celulă e mapată biliniar din atlas în canvas."""
     import numpy as np
 
     src_px = np.asarray(atlas.convert("RGBA")).astype(np.float32)
     sh, sw = src_px.shape[:2]
-    canvas = np.zeros((H, W, 4), dtype=np.float32)
+    # randare la rezoluție mare apoi micșorare: altfel marginile ies dințate și par defecte
+    # de model când de fapt e doar eșantionarea previzualizării
+    SW, SH = W * scale, H * scale
+    canvas = np.zeros((SH, SW, 4), dtype=np.float32)
 
     for _order, opacity, verts, uv, _tri, _ib, k in meshes:
         if opacity <= 0.01:
             continue
         cols = int(round(len(verts) ** 0.5)) - 1
-        layer = np.zeros((H, W, 4), dtype=np.float32)
+        # acumulare cu medie: celulele vecine se suprapun pe muchia comună, iar „ultima
+        # câștigă" lăsa o linie dreaptă vizibilă peste ochi/păr (defect de randare)
+        layer = np.zeros((SH, SW, 4), dtype=np.float32)
+        weight = np.zeros((SH, SW, 1), dtype=np.float32)
+        big = [(x * scale, y * scale) for x, y in verts]
         for r in range(cols):
             for c in range(cols):
                 a = r * (cols + 1) + c
-                dst = [verts[a], verts[a + 1], verts[a + cols + 2], verts[a + cols + 1]]
+                dst = [big[a], big[a + 1], big[a + cols + 2], big[a + cols + 1]]
                 src = [uv[a], uv[a + 1], uv[a + cols + 2], uv[a + cols + 1]]
-                _map_quad(layer, src_px, sh, sw, dst, src)
+                _map_quad(layer, weight, src_px, sh, sw, dst, src)
+        weight[weight == 0] = 1.0
+        layer = layer / weight
         alpha = layer[..., 3:4] * opacity
         layer[..., 3:4] = alpha
         canvas = canvas * (1 - alpha / 255.0) + layer * (alpha / 255.0)
-    return Image.fromarray(np.clip(canvas, 0, 255).astype(np.uint8))
+    out = Image.fromarray(np.clip(canvas, 0, 255).astype(np.uint8))
+    return out.resize((W, H), Image.LANCZOS) if scale > 1 else out
 
 
-def _map_quad(dst_img, src_px, sh, sw, dst, src):
+def _map_quad(dst_img, weight, src_px, sh, sw, dst, src):
     """Umple patrulaterul destinație cu textura din patrulaterul sursă (afin pe 2 triunghiuri)."""
     import numpy as np
 
@@ -109,8 +119,9 @@ def _map_quad(dst_img, src_px, sh, sw, dst, src):
         i0, i1, i2 = corners
         d = np.array([dst[i0], dst[i1], dst[i2]], dtype=np.float64)
         s = np.array([src[i0], src[i1], src[i2]], dtype=np.float64)
+        hh, ww = dst_img.shape[:2]
         x0, y0 = int(max(0, np.floor(d[:, 0].min()))), int(max(0, np.floor(d[:, 1].min())))
-        x1, y1 = int(min(W, np.ceil(d[:, 0].max()) + 1)), int(min(H, np.ceil(d[:, 1].max()) + 1))
+        x1, y1 = int(min(ww, np.ceil(d[:, 0].max()) + 1)), int(min(hh, np.ceil(d[:, 1].max()) + 1))
         if x1 <= x0 or y1 <= y0:
             continue
         yy, xx = np.mgrid[y0:y1, x0:x1]
@@ -137,7 +148,9 @@ def _map_quad(dst_img, src_px, sh, sw, dst, src):
         bottom = src_px[iy1, ix] * (1 - fx) + src_px[iy1, ix1] * fx
         sample = top * (1 - fy) + bottom * fy
         region = dst_img[y0:y1, x0:x1]
-        region[inside] = sample[inside]
+        w = weight[y0:y1, x0:x1]
+        region[inside] += sample[inside]
+        w[inside] += 1.0
 
 
 def main() -> int:

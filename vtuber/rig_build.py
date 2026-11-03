@@ -419,33 +419,37 @@ def build_layers(
         layers["backing"] = backing
     for side in ("L", "R"):
         interior = interiors[side]
-        # marginea se retrage 2 px, ca să cadă în alb curat, nu peste umbra de sub iris;
-        # irisul rămâne însă întreg în mască, altfel se vede o verigă din el când se mută
-        # se retrage DOAR bordura de alb curat (ca marginea să cadă în alb, nu peste umbră),
-        # irisul și umbra lui rămân întregi — altfel marginea taie irisul când alunecă
-        inner_band = interior & ~_erode(interior, 3)
-        lum_here = pixels[..., :3].astype(np.float32).mean(axis=2)
-        trim = inner_band & (lum_here > 225)
-        core = (interior & ~trim) | blobs[side]
+        # Globul trebuie să conțină TOT irisul desenat (altfel rămâne o verigă de iris în
+        # `head` și se vede ca „ochi sub ochi" când se mișcă globul) și să nu acopere piele.
+        blob = iris_blob(pixels, circles[side])
+        interior = (interior | blob) & ~skin_mask(Image.fromarray(pixels[..., :3], "RGB"))
+        # Masca de clipping = exact globul. Înainte se „retrăgea" bordura ca marginea să cadă
+        # în alb; inelul de alb nu mai există, deci nu mai e nimic de retras.
+        core = interior
         layer = np.zeros_like(pixels)
         layer[core] = [255, 255, 255, 255]
         mask_image = Image.fromarray(layer, "RGBA")
-        # estompare de 1 px, dar NUMAI înăuntru: dacă estomparea iese din deschidere, amestecă
-        # albul de rezervă cu obrazul și se umple ochiul la repaus
-        smooth = np.asarray(mask_image.getchannel("A").filter(ImageFilter.GaussianBlur(1.0)))
-        alpha = Image.fromarray(np.where(core, smooth, 0).astype(np.uint8), "L")
-        mask_image.putalpha(alpha)
+        # mască tare: globul are propria margine; o estompare a măștii lăsa capul
+        # (reconstruit) să se vadă pe 1 px pe conturul ochiului
+        mask_image.putalpha(Image.fromarray((core * 255).astype(np.uint8), "L"))
         layers[f"eye_mask_{side}"] = mask_image
-        # Globul ocular: desenul ochiului + 12 px de alb în jur (cât alunecă la maxim, ±11).
-        # Marginea NU se ia din poza de lângă ochi (ar intra genele și pielea în ochi când
-        # se mută), ci se prelungește albul ochiului — se vede ca scleră, nu ca o dungă.
+        # Globul ocular: desenul ochiului, exact deschiderea desenată.
         eyeball = np.zeros_like(pixels)
         eyeball[interior] = pixels[interior]
-        # Fără inel de siguranță: orice alb vopsit în afara desenului ieșea ca margine
-        # peste geană. În urmă rămâne albul reconstruit din `head`, deci alunecarea nu
-        # descoperă nimic (verificat pe ±11 px).
         eyeball[interior, 3] = 255
         layers[f"eye_{side}"] = Image.fromarray(eyeball, "RGBA")
+
+        # Sub glob, în `head`, irisul desenat NU are ce căuta: când globul alunecă (±11 px)
+        # rămânea pe loc un iris-fantomă — exact „ochi sub ochi". Se înlocuiește cu scleră
+        # reconstruită prin difuzie (aceeași funcție ca la albul din jurul irisului), deci
+        # ce se descoperă la mișcare e alb cu umbra desenului, nu un iris.
+        white_eye = eye_white(pixels, interior, grow=2)
+        eye_area = interior
+        filled = head_pixels.copy()
+        filled[eye_area] = white_eye[eye_area]
+        filled[eye_area, 3] = 255
+        head_pixels = filled
+        layers["head"] = Image.fromarray(np.clip(head_pixels, 0, 255).astype(np.uint8), "RGBA")
 
     # pleoapele închise: diferența dintre blink și idle
     from puppet import difference_mask
