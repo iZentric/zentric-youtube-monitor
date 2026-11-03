@@ -146,30 +146,32 @@ Comparație cu modelele oficiale (`python vtuber/reference_diff.py`, Haru/Hiyori
 **0 parametri inventați**, toate cele 16 ID-uri sunt standard; 170 de parametri standard
 lipsesc (brațe, păr, fizică, cele 5 vocale) — exact lucrurile care cer artă separată.
 
-## Ochiul care se uită în altă parte
+## Gâtul și ochii: ce s-a reparat, măsurat
 
-Problema raportată: când irisul se mută, în urmă se vedea urât. Cauza nu era un singur
-lucru, ci trei, toate măsurate:
+Trei lucruri cerute explicit — „nici un pixel pus prost", „să nu îi fuga gâtul", „să nu aibă
+ochi sub ochi" — sunt acum reparate și măsurate, nu „arată bine".
 
-1. **Irisul nu era decupat pe desen** — se folosea un disc ghicit (rază 52) în loc de forma
-   reală. Irisul din desen are 105 px lățime la ochiul albastru și 86 px la cel roșu, deci
-   rămânea o verigă de iris în cap. Acum forma se ia din saturație (`iris_blob`), iar
-   conturul închis al irisului se adaugă explicit (`iris_mask_with_outline`).
-2. **Albul ochiului era vopsit cu o culoare plată** `[248,250,252]`, deci apărea un disc
-   alb vizibil. Acum se rezolvă o umplere armonică (`eye_white`): fiecare pixel devine
-   media vecinilor, marginea rămâne culoarea desenului → umbra de sub pleoapă continuă
-   natural, fără cusătură.
-3. **Capul se construia din desenul original**, nu din imaginea cu irisul scos — un bug de
-   o linie (`head_pixels[:CUT_Y] = pixels[:CUT_Y]`), din cauza căruia tot efortul de
-   ștergere a irisului se pierdea. Acum folosește imaginea curățată.
+**Gâtul.** Nu se mai desenează nimic peste el. Banda de gât din stratul HEAD este exact ce e
+desenat în poză: `head[band] = pixels[band]` doar acolo unde pixelul e piele, restul 0.
+Orice culoare inventată (ton mediu, gradient, continuarea rândului de deasupra) se vedea
+prin deschizătura husei ca o pată — de aceea a fost scoasă complet.
 
-Verificat (`vtuber/test_rig_build.py`):
+Sub guler, gaura din BODY se umple cu **țesătura husei** (difuzie din jur, 400 de iterații),
+nu cu ce e sub cap: acolo arta e goală și ieșea o dungă gri lipită de guler.
 
-| măsurătoare | rezultat |
-|---|---|
-| culoare de iris rămasă în cap | **2 px** dintr-un iris de ~9 000 |
-| zona descoperită la privire maximă | luminanță medie **186**, abatere **54** (nu e plată) |
-| pixeli întunecați rămași în urmă | **0** |
-| cadru de repaus vs `idle.png` | rms **1,17** (doar 1-2 px la marginea irisului) |
+**Capul se deformează, nu se mută.** `_warp_head` mută rândurile gradual: 0 px la guler
+(y=655), maxim sus (y=37). Așa capul se înclină fără să descopere gulerul. Rotația se face
+în jurul lui (512, 700), nu al pivotului, ca gulerul să rămână pe loc.
 
-Comparație vizuală: `vtuber/rig/eye-before-after.png` (stânga înainte, dreapta după).
+**Pleoapele acoperă ochiul, nu se estompează peste el.** Stratul `eyes_closed` era o
+„diferență" estompată pe 7 px: la opacitate maximă rămânea urma ochiului deschis dedesubt
+plus un inel gri în jurul pleoapei. Acum e decupat tare (margine 0 px) pe zona care chiar
+se schimbă între deschis și închis. Rezultat: rama închisă = poza `blink.png`
+(aberație maximă 29 pe 5 pixeli), gura deschisă = poza `talking.png` (36 pe 45 de pixeli).
+
+**Dovadă că nu e ochi sub ochi:** la toate cele 9 poziții ale privirii (±1 pe X și Y), banda
+de sub fiecare pleoapă are **0 pixeli întunecați** și exact același număr de pixeli ca poza
+originală — privirea nu adaugă nimic acolo. Vezi `test_nothing_eye_coloured_under_the_eye_when_the_gaze_moves`.
+
+Imagini de control: `vtuber/rig/verificare-gat.png` (repaus, ±30°) și
+`vtuber/rig/verificare-ochi.png` (deschis / închis / pe jumătate / vorbit).

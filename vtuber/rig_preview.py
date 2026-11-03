@@ -27,6 +27,9 @@ LAYER_FILES = ("backing", "head", "body", "iris_L", "iris_R", "eyes_closed", "mo
 
 # valorile din rigspec
 PIVOT = (512, 655)
+ROTATION_CENTER = (512, 700)   # cât mai jos în gât, ca gulerul să nu se miște
+WARP_ANCHOR = 655      # la guler deplasarea e zero (capul se deformează, nu alunecă întreg)
+WARP_TOP = 37          # vârful capului: aici deplasarea e maximă
 HEAD_PX_PER_DEGREE_X = 14 / 30
 HEAD_PX_PER_DEGREE_Y = 10 / 30
 HEAD_DEGREES_PER_DEGREE_Z = 8 / 30
@@ -55,10 +58,43 @@ def _shift(image: Image.Image, dx: float, dy: float) -> Image.Image:
     return canvas
 
 
-def _shear(image: Image.Image, amount: float) -> Image.Image:
+def _warp_head(image: Image.Image, dx: float, dy: float) -> Image.Image:
+    """Deplasare care scade la zero spre guler — ca un warp, nu ca o alunecare rigidă.
+
+    Dacă tot capul s-ar muta cu 14 px, gâtul ar ieși din guler și s-ar vedea gol (sau un
+    petec inventat). Așa, baza gâtului rămâne pe loc și nu se descoperă nimic.
+    """
+    import numpy as np
+
+    if abs(dx) < 0.01 and abs(dy) < 0.01:
+        return image
+    pixels = np.asarray(image).astype(np.float32)
+    height, width = pixels.shape[:2]
+    rows = np.arange(height)
+    ramp = np.clip((WARP_ANCHOR - rows) / max(1, WARP_ANCHOR - WARP_TOP), 0.0, 1.0)
+    out = np.zeros_like(pixels)
+    for y in range(height):
+        source_y = y - dy * ramp[y]
+        y0 = int(np.floor(source_y))
+        fy = source_y - y0
+        top = pixels[min(max(y0, 0), height - 1)]
+        bottom = pixels[min(max(y0 + 1, 0), height - 1)]
+        row = top * (1 - fy) + bottom * fy
+        shift = dx * ramp[y]
+        xs = np.arange(width) - shift
+        x0 = np.floor(xs).astype(int)
+        fx = (xs - x0)[:, None]
+        left = row[np.clip(x0, 0, width - 1)]
+        right = row[np.clip(x0 + 1, 0, width - 1)]
+        out[y] = left * (1 - fx) + right * fx
+    return Image.fromarray(np.clip(out, 0, 255).astype(np.uint8))
+
+
+def _shear(image: Image.Image, amount: float, start: int = 800) -> Image.Image:
     """Împinge corpul lateral, din ce în ce mai mult spre talie — ca un warp, nu ca o rotire.
 
-    La guler deplasarea e zero, deci gulerul rămâne lipit de gât oricât s-ar înclina corpul.
+    Sub `start` (800) nu se mișcă nimic: gulerul și deschizătura husei rămân pe loc, deci
+    nu se poate deschide nici un gol de 1 px între gât și guler.
     """
     import numpy as np
 
@@ -68,7 +104,7 @@ def _shear(image: Image.Image, amount: float) -> Image.Image:
     height, width = pixels.shape[:2]
     out = np.zeros_like(pixels)
     for y in range(height):
-        ratio = max(0.0, (y - PIVOT[1]) / (height - PIVOT[1]))
+        ratio = max(0.0, (y - start) / (height - start)) ** 1.5 if y > start else 0.0
         dx = int(round(amount * ratio))
         if dx == 0:
             out[y] = pixels[y]
@@ -117,8 +153,8 @@ def render(layers: dict[str, Image.Image], angle_x: float = 0.0, angle_y: float 
     face = _face_stack(layers, eyeball_x, eyeball_y, eye_open, mouth)
 
     degrees = angle_z * HEAD_DEGREES_PER_DEGREE_Z
-    moved = face.rotate(-degrees, resample=Image.BICUBIC, center=PIVOT)
-    moved = _shift(moved, angle_x * HEAD_PX_PER_DEGREE_X, angle_y * HEAD_PX_PER_DEGREE_Y)
+    moved = face.rotate(-degrees, resample=Image.BICUBIC, center=ROTATION_CENTER)
+    moved = _warp_head(moved, angle_x * HEAD_PX_PER_DEGREE_X, angle_y * HEAD_PX_PER_DEGREE_Y)
 
     body = _shear(layers["body"], angle_x * 0.55)   # warp de corp: 0 la guler, maxim jos
 

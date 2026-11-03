@@ -18,9 +18,7 @@ def test_layers_rebuild_the_original_picture():
     layers = build_layers()
     rebuilt = composite(layers)
     original = Image.open(ASSETS / "idle.png").convert("RGBA")
-    # 2.0 și nu 1.0: irisul e decupat exact pe desen, iar albul de sub el e reconstruit
-    # prin difuzie (diferă doar 1-2 px de margine; măsurat 1.17)
-    assert np.sqrt((difference(rebuilt, original) ** 2).mean()) < 2.0
+    assert np.sqrt((difference(rebuilt, original) ** 2).mean()) < 1.0
 
 
 def test_head_and_body_split_at_the_collar():
@@ -38,25 +36,18 @@ def test_irises_are_circles_inside_the_eyes():
         box = layers[name].getchannel("A").getbbox()
         assert box is not None
         width, height = box[2] - box[0], box[3] - box[1]
-        assert 80 <= width <= 120 and 80 <= height <= 120   # irisul desenat, ~105 px
-        assert abs(width - height) <= 12                     # aproximativ rotund, nu oval
+        assert 90 <= width <= 115 and 90 <= height <= 115   # disc de rază ~52
+        assert abs(width - height) <= 4                      # rotund, nu oval
 
 
-def test_no_iris_colour_is_left_in_the_head():
-    """Irisul e strat separat: în cap nu are voie să rămână culoarea lui, altfel la
-    mișcare se vede o verigă în urmă. Umbra de sub pleoapă are voie să rămână — e a
-    desenului, stă deasupra irisului."""
-    import numpy as np
-
+def test_head_has_white_where_the_iris_was():
+    """Fără whitening, irisul rămas în cap s-ar vedea dublu când se mișcă."""
     layers = build_layers()
-    head = np.asarray(layers["head"].convert("RGB")).astype(np.float32)
-    iris = np.zeros(head.shape[:2], bool)
-    for side in ("L", "R"):
-        iris |= np.asarray(layers[f"iris_{side}"].getchannel("A")) > 24
-    luminance = head[..., :3].mean(axis=2)
-    sat = head[..., :3].max(axis=2) - head[..., :3].min(axis=2)
-    leftover = int(((luminance < 140) & (sat > 60))[iris].sum())
-    assert leftover < 20, f"{leftover} pixeli de culoare de iris au rămas în cap"
+    head = np.asarray(layers["head"])
+    left, _right = iris_masks((1024, 1024))
+    ys, xs = np.nonzero(left)
+    centre = (int(ys.mean()), int(xs.mean()))
+    assert head[centre][:3].min() > 230   # albul ochiului, nu irisul albastru
 
 
 def test_eyes_closed_and_mouth_open_touch_only_their_regions():
@@ -115,8 +106,7 @@ def test_psd_round_trip_keeps_the_layers():
     for layer in reversed(list(flatten(psd, visible_only=True))):
         rebuilt.alpha_composite(layer.topil().convert("RGBA"))
     original = Image.open(ASSETS / "idle.png").convert("RGBA")
-    # 2.5 și nu 1.0: marginea irisului e pe difuzie, deci 1-2 px diferă (măsurat 1.17)
-    assert np.sqrt((difference(rebuilt, original) ** 2).mean()) < 2.5
+    assert np.sqrt((difference(rebuilt, original) ** 2).mean()) < 1.0
 
 
 def test_body_has_no_skin_so_the_neck_rotates_with_the_head():
@@ -128,16 +118,43 @@ def test_body_has_no_skin_so_the_neck_rotates_with_the_head():
 
 
 def test_no_gap_at_the_collar_when_the_head_rotates():
-    """Cusătura de la guler, la rotirea maximă din rigspec (±8°)."""
+    """Cusătura de la guler, la capul rotit și mutat la maxim — pe randarea adevărată."""
+    import rig_preview
+
     layers = build_layers()
-    for angle in (-8, 0, 8):
-        rotated = layers["head"].rotate(angle, resample=Image.BICUBIC, center=(512, 655))
-        frame = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
-        frame.alpha_composite(layers["body"])
-        frame.alpha_composite(rotated)
-        alpha = np.asarray(frame)[..., 3]
-        band = alpha[640:760, 300:730]
-        assert (band < 8).sum() <= 5, f"gol de {int((band < 8).sum())} pixeli la rotire {angle}°"
+    for angle_x, angle_y, angle_z in ((-30, -30, -30), (-30, 0, 30), (30, -30, 30), (30, 30, -30)):
+        frame = rig_preview.render(layers, angle_x, angle_y, angle_z)
+        alpha = np.asarray(frame.getchannel("A"))
+        band = alpha[640:780, 300:730]
+        assert (band < 8).sum() == 0, f"gol de {int((band < 8).sum())} pixeli la {angle_x}/{angle_y}/{angle_z}"
+
+
+def test_nothing_eye_coloured_under_the_eye_when_the_gaze_moves():
+    """„Ochi sub ochi": la orice poziție a privirii, pe obrajii de sub pleoape nu are
+    voie să apară nici un pixel de iris sau întunecat care nu e în poza originală."""
+    import numpy as np
+    import rig_preview
+
+    layers = build_layers()
+    art = np.asarray(Image.open(ASSETS / "idle.png").convert("RGB"), dtype=int)
+    bands = {"L": (slice(506, 540), slice(340, 462)), "R": (slice(503, 537), slice(558, 680))}
+
+    def eye_coloured(img):
+        out = {}
+        for name, (ys, xs) in bands.items():
+            px = np.asarray(img, dtype=int)[ys, xs]
+            dark = int((px.max(axis=2) < 70).sum())
+            iris = int(((px[:, :, 0] > px[:, :, 1] + 45) & (px[:, :, 0] > px[:, :, 2] + 45)
+                        & (px[:, :, 1] < 90)).sum())
+            out[name] = (dark, iris)
+        return out
+
+    reference = eye_coloured(art)
+    for ex in (-1.0, 0.0, 1.0):
+        for ey in (-1.0, 0.0, 1.0):
+            got = eye_coloured(rig_preview.render(layers, 0, 0, 0, ex, ey, 1, 0))
+            assert got == reference, f"la privirea {ex:+}/{ey:+} apare ceva sub pleoapă: {got} vs {reference}"
+            assert all(dark == 0 for dark, _ in got.values()), f"pixeli întunecați sub pleoapă: {got}"
 
 
 def test_pack_contains_everything_needed_to_rig():
@@ -167,62 +184,17 @@ def test_backing_layer_is_inside_the_silhouette_and_fills_the_hood_opening():
     assert backing.sum() > 2000, "spatele e gol"
 
 
-def test_neck_is_painted_skin_not_a_swatch_of_the_hoodie():
-    """Gâtul prelungit sub guler trebuie vopsit în culoarea pielii, nu copiat din husă."""
+def test_neck_keeps_the_drawn_pixels_and_invents_nothing():
+    """Gâtul e exact ce e desenat: nici un pixel vopsit de mână. Orice pată inventată
+    acolo ar ieși la iveală prin deschizătura husei."""
     import numpy as np
-
-    layers = rig_build.build_layers()
-    head = np.asarray(layers["head"].convert("RGB")).astype(int)
-    alpha = np.asarray(layers["head"].getchannel("A")) > 200
-    band = alpha[700:740, 470:560]
-    colors = head[700:740, 470:560][band]
-    assert len(colors) > 500, "gâtul prelungit lipsește"
-    r, g, b = colors.mean(axis=0)
-    assert r > g > b and r - b > 25 and r > 150, f"gâtul nu e piele: {r:.0f},{g:.0f},{b:.0f}"
-
-
-def test_iris_is_taken_from_the_drawing_not_from_a_guessed_circle():
-    """Masca irisului trebuie să fie forma desenată: nici mai mică (rămâne verigă),
-    nici mai mare (mănâncă albul ochiului)."""
-    import numpy as np
-    from PIL import Image
-
-    pixels = np.asarray(Image.open(ASSETS / "idle.png").convert("RGB"))
-    for side in ("L", "R"):
-        blob = rig_build.iris_blob(pixels, rig_build.IRIS_CIRCLES[side])
-        ys, xs = np.nonzero(blob)
-        width, height = xs.max() - xs.min(), ys.max() - ys.min()
-        assert 70 < width < 120 and 70 < height < 120, f"iris {side}: {width}x{height}"
-        assert 0.8 < width / height < 1.25, "irisul nu e rotund"
-
-
-def test_looking_away_exposes_a_shaded_white_without_a_dark_ring():
-    """Testul pentru „se vede urât când mă uit în altă parte": se mută irisul la maxim
-    și se măsoară exact zona descoperită — trebuie albă, cu umbră și fără verigă."""
-    import numpy as np
-
-    import rig_preview
 
     layers = build_layers()
-    iris = np.zeros((1024, 1024), bool)
-    for side in ("L", "R"):
-        iris |= np.asarray(layers[f"iris_{side}"].getchannel("A")) > 24
-    dx, dy = round(rig_preview.IRIS_PX_X), round(rig_preview.IRIS_PX_Y)
-    moved_iris = np.zeros_like(iris)
-    moved_iris[dy:, dx:] = iris[:-dy, :-dx]
-    revealed = iris & ~moved_iris
-    assert revealed.sum() > 800, "irisul nu se mișcă suficient ca să se vadă albul"
-
-    rest = np.asarray(rig_preview.render(layers).convert("RGB")).astype(np.float32)
-    moved = np.asarray(rig_preview.render(layers, eyeball_x=1.0, eyeball_y=1.0)
-                       .convert("RGB")).astype(np.float32)
-    revealed = revealed & (rest[..., :3].mean(axis=2) > 100)   # fără conturul negru al ochiului
-    assert revealed.sum() > 1200
-
-    luminance = moved[..., :3].mean(axis=2)
-    sat = moved[..., :3].max(axis=2) - moved[..., :3].min(axis=2)
-    # măsurat: medie 186 (umbra pleoapei trage media în jos), abatere 54
-    assert luminance[revealed].mean() > 175, f"albul descoperit e prea închis: {luminance[revealed].mean():.0f}"
-    assert luminance[revealed].std() > 10, "albul descoperit e plat (fără umbră)"
-    dark = int(((luminance < 150) & (sat > 60))[revealed].sum())
-    assert dark < revealed.sum() * 0.01, f"{dark} pixeli de iris au rămas în urmă"
+    art = np.asarray(Image.open(ASSETS / "idle.png").convert("RGBA")).astype(int)
+    head = np.asarray(layers["head"].convert("RGBA")).astype(int)
+    band = slice(rig_build.CUT_Y - 40, rig_build.CUT_Y + 40)
+    alpha = head[band, :, 3]
+    painted = alpha > 8
+    assert painted.sum() > 500, "gâtul lipsește din stratul de cap"
+    different = np.abs(head[band, :, :3] - art[band, :, :3]).max(axis=2)[painted]
+    assert different.max() == 0, f"{int((different > 0).sum())} pixeli din gât nu sunt cei desenați"
