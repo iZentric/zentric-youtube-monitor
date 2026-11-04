@@ -41,7 +41,9 @@ def test_eye_mask_covers_the_whole_drawn_iris():
         blob = rig_build.iris_blob(source, rig_build.IRIS_CIRCLES[side])
         mask = np.asarray(layers[f"eye_mask_{side}"].getchannel("A")) > 24
         assert not (blob & ~mask).any(), f"irisul {side} iese din mască"
-        assert mask.sum() > blob.sum(), "masca e mai mică decât irisul"
+        # masca = exact deschiderea desenată a ochiului, iar globul e decupat din ea:
+        # poate fi egală cu irisul, ce contează e că îl acoperă în întregime
+        assert mask.sum() >= blob.sum(), "masca e mai mică decât irisul"
 
 
 def test_eyeball_is_exactly_the_drawn_eye_no_white_ring():

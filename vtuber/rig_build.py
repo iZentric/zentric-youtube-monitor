@@ -298,6 +298,47 @@ def _erode(mask: np.ndarray, radius: int) -> np.ndarray:
     return ~grown
 
 
+def eye_opening(pixels: np.ndarray, blob: np.ndarray, ellipse: np.ndarray,
+                grow: int = 0) -> np.ndarray:
+    """Deschiderea ochiului, mărginită de geană — geometric, nu pe praguri de culoare.
+
+    Se pornește din centrul irisului și se umple tot ce e „liber" (nu geană neagră), în
+    interiorul elipsei de siguranță. Rezultatul e EXACT ochiul desenat: albul, irisul,
+    umbra albăstruie și reflexele, fără nici un pixel de geană și fără bucăți detașate
+    (umplerea e prin definiție o singură componentă conexă).
+    """
+    rgb = pixels[..., :3].astype(np.float32)
+    lum = rgb.mean(axis=2)
+    sat = pixels[..., :3].astype(np.int16)
+    sat = sat.max(axis=2) - sat.min(axis=2)
+    # geana = negru neutru; irisul e colorat (saturat), deci nu intră aici
+    lash = (lum < 95) & (sat < 75)
+    seed_ys, seed_xs = np.nonzero(blob)
+    if not len(seed_ys):
+        return blob
+    free = ellipse & ~lash & (pixels[..., 3] > 60)
+    region = _blob_at(free, (int(np.median(seed_xs)), int(np.median(seed_ys))))
+    if region.sum() < 400:
+        return blob
+    # găurile închise din interior (reflexe înconjurate de iris) fac parte din ochi
+    canvas = Image.fromarray(region.astype(np.uint8) * 255, "L").copy()
+    ImageDraw.floodfill(canvas, (0, 0), 128)
+    region = region | (np.asarray(canvas) == 0)
+    if grow:
+        region = _dilate(region, grow) & ellipse & ~lash
+    # Plasa de siguranță (elipsa) e mai mare decât ochiul, deci umplerea poate ocoli
+    # capătul genei și poate urca pe pleoapă — pielea e portocalie, restul ochiului nu.
+    skin_rgb = pixels[..., :3].astype(np.int16)
+    rr, gg, bb = skin_rgb[..., 0], skin_rgb[..., 1], skin_rgb[..., 2]
+    skin_here = (rr > gg + 40) & (gg > bb) & (gg > 90)
+    region = region & ~skin_here
+    # după tăiere rămâne o singură bucată: cea care conține irisul
+    ys, xs = np.nonzero(region & _dilate(blob, 3))
+    if len(ys):
+        region = _blob_at(region | blob, (int(xs[0]), int(ys[0]))) & ~skin_here
+    return region
+
+
 def eye_interior(pixels: np.ndarray, zone: np.ndarray, ellipse: np.ndarray,
                 brightness: float = 140.0) -> np.ndarray:
     """Forma deschiderii ochiului desenat: albul + irisul, până la gene.
@@ -383,7 +424,8 @@ def build_layers(
     blobs = {side: iris_blob(pixels, circles[side]) for side in ("L", "R")}
     zones = {side: iris_mask_with_outline(pixels, blobs[side], 3) for side in ("L", "R")}
     ellipses = eye_mask_masks(source.size, circles)
-    interiors = {side: eye_interior(pixels, zones[side], ellipses[side]) for side in ("L", "R")}
+    # deschiderea ochiului = umplere din iris mărginită de geană (nu praguri de culoare)
+    interiors = {side: eye_opening(pixels, blobs[side], ellipses[side]) for side in ("L", "R")}
 
     # capul: tot ce e deasupra gulerului + gâtul (doar pielea) din banda de sub el.
     # Gulerul rămâne la trup, deci la rotire capul ia gâtul cu el și gulerul stă pe loc.
@@ -424,9 +466,21 @@ def build_layers(
         # `head` și se vede ca „ochi sub ochi" când se mișcă globul) și să nu acopere piele.
         blob = iris_blob(pixels, circles[side])
         interior = (interior | blob) & ~skin_mask(Image.fromarray(pixels[..., :3], "RGB"))
+        # Globul se retrage 2 px de la geană: altfel marginea lui cade exact pe conturul
+        # negru și, la randarea din .moc3 (eșantionare biliniară), geana iese mai subțire.
+        # Ce rămâne descoperit e tot desenul (geana din `head`), deci repausul e identic.
+        # ...dar peste iris globul rămâne întreg, altfel rămâne în cap o verigă de iris
+        # care iese la iveală ca o bucată albastră detașată când se mișcă privirea
+        # peste iris (inclusiv umbra lui închisă) globul rămâne întreg, altfel rămâne în
+        # cap o verigă de iris care iese la iveală ca o bucată albastră când se mișcă privirea
+        ball_area = _erode(interior, 2) | (_dilate(zones[side] & interior, 1) & interior)
+        # o singură bucată: se păstrează doar componenta care conține irisul
+        ys_b, xs_b = np.nonzero(ball_area & blob)
+        if len(ys_b):
+            ball_area = _blob_at(ball_area, (int(xs_b[0]), int(ys_b[0]))) | (blob & interior)
         # Masca de clipping = exact globul. Înainte se „retrăgea" bordura ca marginea să cadă
         # în alb; inelul de alb nu mai există, deci nu mai e nimic de retras.
-        core = interior
+        core = ball_area
         layer = np.zeros_like(pixels)
         layer[core] = [255, 255, 255, 255]
         mask_image = Image.fromarray(layer, "RGBA")
@@ -436,8 +490,8 @@ def build_layers(
         layers[f"eye_mask_{side}"] = mask_image
         # Globul ocular: desenul ochiului, exact deschiderea desenată.
         eyeball = np.zeros_like(pixels)
-        eyeball[interior] = pixels[interior]
-        eyeball[interior, 3] = 255
+        eyeball[ball_area] = pixels[ball_area]
+        eyeball[ball_area, 3] = 255
         layers[f"eye_{side}"] = Image.fromarray(eyeball, "RGBA")
         eye_fill[side] = interior
 
@@ -450,14 +504,16 @@ def build_layers(
         lum_i = pixels[..., :3].astype(np.float32).mean(axis=2)
         sat_i = pixels[..., :3].astype(np.int16)
         sat_i = sat_i.max(axis=2) - sat_i.min(axis=2)
-        inside = interior
+        inside = ball_area
         white_only = inside & ~blob & (lum_i > 200) & (sat_i < 60)
         alb = (np.median(pixels[white_only][:, :3].reshape(-1, 3), axis=0)
                if white_only.sum() > 50 else np.array([250, 250, 252]))
         filled = head_pixels.copy()
         # +2 px: conturul anti-aliased al irisului rămânea ca o linie punctată roșie
         # ...dar niciodată în afara globului: altfel albul iese pe marginea ochiului la repaus
-        filled[_dilate(inside & blob, 2) & inside] = np.append(alb, 255).astype(filled.dtype)
+        # sub glob capul e scleră pe TOATĂ suprafața, nu doar sub iris: dacă rămâne iris
+        # acolo, la mișcarea privirii iese la iveală ca o bucată albastră detașată
+        filled[inside] = np.append(alb, 255).astype(filled.dtype)
         head_pixels = filled
         layers["head"] = Image.fromarray(np.clip(head_pixels, 0, 255).astype(np.uint8), "RGBA")
 

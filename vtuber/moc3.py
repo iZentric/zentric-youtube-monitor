@@ -171,6 +171,8 @@ class Mesh:
     bindings: list[Binding] = field(default_factory=list)
     keyforms: list[list[tuple[float, float]]] = field(default_factory=list)
     keyform_opacities: list[float] = field(default_factory=list)
+    # ordinea de desenare: 0–1000, valoarea mai MARE stă mai în față (Cubism)
+    draw_order: float = 500.0
 
 
 @dataclass
@@ -287,7 +289,7 @@ def build(m: Model) -> bytes:
                 nx, ny = nrm(x, y)
                 pos += [nx, ny]
             kf_opac.append(op)
-            kf_draw.append(500.0)
+            kf_draw.append(mesh.draw_order)
         for u, v in mesh.uvs:
             uv += [u, v]
         for t in mesh.tris:
@@ -366,8 +368,9 @@ def build(m: Model) -> bytes:
     s["draw_order_group.object_begin_indices"] = [0]
     s["draw_order_group.object_counts"] = [n_mesh]
     s["draw_order_group.object_total_counts"] = [n_mesh]
-    s["draw_order_group.min_draw_orders"] = [1000]
-    s["draw_order_group.max_draw_orders"] = [200]
+    _orders = [mesh.draw_order for mesh in m.meshes] or [500.0]
+    s["draw_order_group.min_draw_orders"] = [int(min(_orders))]
+    s["draw_order_group.max_draw_orders"] = [int(max(_orders))]
     s["draw_order_group_object.types"] = [0] * n_mesh
     s["draw_order_group_object.indices"] = [n_mesh - 1 - i for i in range(n_mesh)]
     s["draw_order_group_object.group_indices"] = [-1] * n_mesh

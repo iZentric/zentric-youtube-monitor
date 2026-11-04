@@ -139,8 +139,11 @@ def _map_quad(dst_img, weight, src_px, sh, sw, dst, src):
             continue
         sx = s[0, 0] + u * (s[1, 0] - s[0, 0]) + v * (s[2, 0] - s[0, 0])
         sy = s[0, 1] + u * (s[1, 1] - s[0, 1]) + v * (s[2, 1] - s[0, 1])
-        sx = np.clip(sx, 0, sw - 1)
-        sy = np.clip(sy, 0, sh - 1)
+        # UV-ul e în „muchia stângă a texelului"; eșantionarea biliniară de aici are
+        # centrele texelilor la coordonate întregi, deci -0.5. Fără el, tot ce e tăiat
+        # (iris, gene, gura) iese spălăcit cu jumătate de pixel — exact ca o tăietură.
+        sx = np.clip(sx - 0.5, 0, sw - 1)
+        sy = np.clip(sy - 0.5, 0, sh - 1)
         ix, iy = np.floor(sx).astype(int), np.floor(sy).astype(int)
         fx, fy = (sx - ix)[..., None], (sy - iy)[..., None]
         ix1, iy1 = np.clip(ix + 1, 0, sw - 1), np.clip(iy + 1, 0, sh - 1)

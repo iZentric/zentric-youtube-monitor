@@ -56,7 +56,7 @@ def main() -> int:
     # 2. globul vs desen
     lum = art_px[..., :3].mean(axis=2)
     sat = art_px[..., :3].max(axis=2) - art_px[..., :3].min(axis=2)
-    lash = (lum < 150) & (sat < 35)
+    lash = (lum < 95) & (sat < 75)
     ys, xs = np.mgrid[0:1024, 0:1024]
     iris_zone = np.zeros((1024, 1024), bool)
     for _side, (cx, cy, radius) in rig_build.IRIS_CIRCLES.items():
@@ -64,10 +64,15 @@ def main() -> int:
     for side in ("L", "R"):
         eye = np.asarray(layers[f"eye_{side}"].getchannel("A")) > 24
         skin = rig_build.skin_mask(art)
+        mask = np.asarray(layers[f"eye_mask_{side}"].getchannel("A")) > 24
         lash_hit = int((eye & lash & ~iris_zone).sum())
         notes.append(f"2. eye_{side}: {int(eye.sum())} px, geană în glob {lash_hit}, piele în glob {int((eye & skin).sum())}")
         check(lash_hit < 400, f"eye_{side} înghite geana ({lash_hit} px)")
-        check(int((eye & skin).sum()) < 50, f"eye_{side} acoperă piele")
+        # pielea contează doar în afara ochiului propriu-zis (umbra din scleră e palidă
+        # și intră în `skin_mask`, deci nu e o problemă)
+        ellipse = rig_build._dilate(mask, 2)
+        outside = int((eye & skin & ~ellipse).sum())
+        check(outside < 50, f"eye_{side} acoperă piele în afara ochiului ({outside} px)")
 
     # 3. irisul: poziție și rază, față de desen
     for side, (cx, cy, radius) in rig_build.IRIS_CIRCLES.items():
@@ -78,6 +83,35 @@ def main() -> int:
         notes.append(f"3. iris {side}: centru {bx.mean():.0f},{by.mean():.0f}, {int(blob.sum())} px, "
                      f"în afara globului {cover}")
         check(cover == 0, f"irisul {side} are {cover} px în afara globului")
+
+    # 3b. geana stă pe loc: mișcăm privirea și verificăm că nici un pixel de geană nu se
+    # mișcă (dacă globul ar conține geană, banda s-ar schimba)
+    opening = np.zeros((1024, 1024), bool)
+    for side in ("L", "R"):
+        opening |= np.asarray(layers[f"eye_{side}"].getchannel("A")) > 24
+    band = lash & rig_build._dilate(opening, 8) & ~opening
+    rest_px = np.asarray(rp.render(layers)).astype(int)
+    for ex, ey in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+        moved = np.asarray(rp.render(layers, eyeball_x=ex, eyeball_y=ey)).astype(int)
+        delta = np.abs(moved[..., :3] - rest_px[..., :3]).max(axis=2)
+        changed = int((delta[band] > 6).sum())
+        notes.append(f"3b. privire {ex},{ey}: {changed} px de geană mișcați")
+        check(changed < 30, f"geana se mișcă cu globul ({changed} px la privirea {ex}/{ey})")
+
+    # 3c. globul e o singură bucată (fără fragmente detașate)
+    for side in ("L", "R"):
+        ball = np.asarray(layers[f"eye_{side}"].getchannel("A")) > 24
+        total = int(ball.sum())
+        rest_m = ball.copy()
+        biggest = 0
+        while rest_m.any():                     # toate componentele, nu doar prima
+            ys0, xs0 = np.nonzero(rest_m)
+            comp = rig_build._blob_at(rest_m, (int(xs0[0]), int(ys0[0])))
+            biggest = max(biggest, int(comp.sum()))
+            rest_m &= ~comp
+        stray = total - biggest
+        notes.append(f"3c. eye_{side}: cea mai mare bucată {biggest}, în afara ei {stray} px")
+        check(stray < 5, f"eye_{side} are {stray} px detașați de glob")
 
     # 4. clipitul acoperă ochiul deschis
     open_frame = np.asarray(rp.render(layers, eye_open=1.0)).astype(int)

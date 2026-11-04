@@ -314,10 +314,14 @@ def build(first_level: bool = False):
     layers = split_horns(load_layers(RIG))
     atlas, regions = pack(layers)
     meshes, order = {}, []
-    for name in DRAW:
+    for draw_i, name in enumerate(DRAW):
         cols = rows = GRID[name]
         verts, uvs, tris = _grid(regions[name], cols, rows)
-        kwargs = {"part": 0, "texture": 0}
+        # ordinea de desenare: DRAW merge din spate în față, iar în .moc3 valoarea mai
+        # MARE stă mai în față (Cubism, 0–1000). Cu toate pe 500, ordinea depindea de
+        # runtime — în VTS se putea vedea capul peste ochi, adică exact „tăiat".
+        kwargs = {"part": 0, "texture": 0,
+                  "draw_order": 10.0 * (draw_i + 1)}
         if name in HEAD_LAYERS:
             bindings = [Binding(P["ParamAngleX"], KEYS["ParamAngleX"]),
                         Binding(P["ParamAngleY"], KEYS["ParamAngleY"]),
