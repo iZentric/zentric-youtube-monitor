@@ -21,6 +21,13 @@ _Actualizat: 2026-11-04 · branch `arena/1c1bafd0-zentric-youtube-monitor` · co
 3. B1/B2: extrag „Rig Spec" din referințe, construiesc aceeași schemă pe iZentric.
 4. C1/C2: după confirmarea licenței (utilizatorul a spus „ale mele").
 
+## ⛔ Defect BLOCKER dovedit (2026-11-04)
+`.moc3`-ul scris de cod **nu e valid**: Cubism Core oficial (SDK 5-r.5) crapă la încărcare
+(`python vtuber/check_moc3.py vtuber/rig-2048/izentric.moc3` → `"ok": false, "error": "Core a
+respins fișierul (cod -11)"`; -11 = SIGSEGV). VTS crapă din același motiv.
+Textura NU era cauza: și la 2048 crapă la fel.
+Consecință: nici un model din lanțul Python nu poate fi încărcat până nu se repară scriitorul.
+
 ## Defecte deschise
 | # | severitate | defect | stare |
 |---|---|---|---|
