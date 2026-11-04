@@ -224,10 +224,14 @@ def build_side(rgb: np.ndarray, side: str) -> tuple[dict[str, Image.Image], tupl
     clean = iris & ~hl_mask & (lum < 200)
     iris_layer = np.zeros((H, W, 4), np.int16)
     iris_layer[clean] = rgb[clean]
-    # Golurile se umplu RADIAL: din centrul irisului spre exterior, până la primul pixel
-    # curat din aceeași direcție. Irisul desenat are gradient radial, deci continuarea
-    # iese natural — oglindirea aducea culoarea de jos (deschisă) în vârf (închis).
-    hole = ellipse & ~clean
+    ys_i, xs_i = np.nonzero(iris)
+    top_drawn = ys_i.min()           # vârful irisului desenat, acolo unde începe geana
+    # Ce se completează: (a) găurile din reflexii, în interiorul irisului desenat;
+    # (b) partea de SUS a elipsei, ascunsă sub geană. Restul elipsei NU se umple —
+    # altfel cercul intra în sclera albăstrie de jos și ieșea „pană" deschisă (defectul
+    # din G-OCHI). Irisul desenat e complet în jos, deci nu are ce să ascundă acolo.
+    hole = (iris & ~clean) | (ellipse & (yy < top_drawn) & ~clean)
+    hole &= ellipse | iris
     ys_h, xs_h = np.nonzero(hole)
     for y, x in zip(ys_h, xs_h):
         dx, dy = (x - icx), (y - icy)
@@ -247,7 +251,7 @@ def build_side(rgb: np.ndarray, side: str) -> tuple[dict[str, Image.Image], tupl
         from PIL import ImageFilter
         tmp = Image.fromarray(np.clip(iris_layer[..., :3], 0, 255).astype(np.uint8), "RGB")
         iris_layer[hole, :3] = np.asarray(tmp.filter(ImageFilter.GaussianBlur(2.0))).astype(np.int16)[hole]
-    iris_layer[..., 3] = np.where(ellipse, 255, 0)
+    iris_layer[..., 3] = np.where(iris | (ellipse & (yy < top_drawn)), 255, 0)
 
     # ---------------------------------------------------------------- alb
     white_in = ochi & ~iris & ~hl_mask
@@ -256,10 +260,10 @@ def build_side(rgb: np.ndarray, side: str) -> tuple[dict[str, Image.Image], tupl
     extend = _grow_into(ochi | _dilate(ochi, 1), lash_mask | ochi, UNDER_LASH) & ~ochi
     white_layer = np.zeros((H, W, 4), np.int16)
     white_layer[ochi | extend] = np.append(alb, 255).astype(np.int16)
-    # umbra albăstruie desenată se păstrează (face parte din strat)
-    # umbra sclerii e albăstruie; marginile anti-aliased ale irisului/geanii nu intră
-    shadow = white_in & (lum > 150) & (lum < 245) & (rgb[..., 2] >= rgb[..., 0] + 8)
-    white_layer[shadow] = rgb[shadow]
+    # Sclera se ia din desen pixel cu pixel (alb + umbra albăstruie de sub geană):
+    # o culoare medie o făcea uniform Albăstrie și se vedea diferența la zoom.
+    draw_white = white_in & (lum > 150)
+    white_layer[draw_white] = rgb[draw_white]
     from PIL import ImageFilter as _IF
     _a = Image.fromarray(((ochi | extend) * 255).astype(np.uint8), "L").filter(_IF.GaussianBlur(0.6))
     white_layer[..., 3] = np.asarray(_a).astype(np.int16)

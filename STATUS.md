@@ -31,6 +31,15 @@ Reparat în `vtuber/moc3.py`; ambele build-uri (4096 și 2048) trec acum
 Modelele de referință se recuperează din istoric (nu stau în working tree):
 `git cat-file blob 9407095affef6b63d72cb487a26b1d2bad56e241 > ref/ellot.zip`
 
+## Ochi (2026-11-04, după fixul de runtime)
+- Stratul `eye_L/eye_R` = **pixelii desenului** tăiați pe masca ochiului (diferența
+  deschis↔închis, dilatată 2 px), nu reconstrucție. Diferență față de desen în zona
+  ochilor: **184 px >40** din ~14 800 (era 2325 înainte), medie 0,58.
+- `eyes_closed` = desenul cu ochii închiși pe **aceeași mască** → la clipit nu rămâne
+  iris la vedere.
+- `vtuber/compose_eyes.py` leagă piesele/desenul de straturile modelului (înainte,
+  piesele refăcute nu ajungeau niciodată în `.moc3`).
+
 ## Defecte deschise
 | # | severitate | defect | stare |
 |---|---|---|---|
