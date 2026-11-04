@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-11-03T13:45:59.284025+00:00",
+  "fetched_at": "2026-11-04T13:54:25.616855+00:00",
   "channels": [
     {
       "name": "Zentric Minecraft",
@@ -112,6 +112,13 @@
       "channel_url": "https://www.youtube.com/channel/UCGh69zTKqqo4vPIJOndt32w",
       "latest": [
         {
+          "video_id": "PIxKaqrWwb4",
+          "title": "The Tsunami is coming..",
+          "published": null,
+          "duration": 1282,
+          "url": "https://www.youtube.com/watch?v=PIxKaqrWwb4"
+        },
+        {
           "video_id": "GJfMDEQgzGA",
           "title": "7 Days with the Cat..",
           "published": null,
@@ -208,13 +215,6 @@
           "published": null,
           "duration": 1092,
           "url": "https://www.youtube.com/watch?v=J6s_4dHb2bQ"
-        },
-        {
-          "video_id": "j4M239gXHfw",
-          "title": "I have Fredbear's SPEED and SNIPER..",
-          "published": null,
-          "duration": 1032,
-          "url": "https://www.youtube.com/watch?v=j4M239gXHfw"
         }
       ]
     },
@@ -224,8 +224,15 @@
       "channel_url": "https://www.youtube.com/channel/UC7Tmdxj18fdu4tTtxVUhoCA",
       "latest": [
         {
+          "video_id": "Q0MD-c7BAwY",
+          "title": "Mi-a FURAT PISICA in Noaptea 6..",
+          "published": null,
+          "duration": 1359,
+          "url": "https://www.youtube.com/watch?v=Q0MD-c7BAwY"
+        },
+        {
           "video_id": "HR-nHUZLHVw",
-          "title": "Totul este FATĂ pe Steal an EGG !",
+          "title": "Doar FETE pe Steal an EGG !",
           "published": null,
           "duration": 1169,
           "url": "https://www.youtube.com/watch?v=HR-nHUZLHVw"
@@ -253,14 +260,14 @@
         },
         {
           "video_id": "6m0mga7Om6s",
-          "title": "A venit dupa MINE in CASA.. 💀",
+          "title": "A fost ASCUNS in CASA si a iesit SEARA..",
           "published": null,
           "duration": 3323,
           "url": "https://www.youtube.com/watch?v=6m0mga7Om6s"
         },
         {
           "video_id": "zt3ouFbIEjY",
-          "title": "L-am gasit pe JERRY pe Roblox !",
+          "title": "Cainele JERRY a venit pe Roblox !",
           "published": null,
           "duration": 1861,
           "url": "https://www.youtube.com/watch?v=zt3ouFbIEjY"
@@ -281,7 +288,7 @@
         },
         {
           "video_id": "PC3YH_T34DE",
-          "title": "NU este BINE Cainele MEU..",
+          "title": "Cainele meu S-A TRANSFORMAT !",
           "published": null,
           "duration": 1327,
           "url": "https://www.youtube.com/watch?v=PC3YH_T34DE"
@@ -302,7 +309,7 @@
         },
         {
           "video_id": "K9_M3AQJm5I",
-          "title": "Povestea REALA din SPATELE USII..",
+          "title": "TESTEZ 100 de LEGENDE pe Roblox",
           "published": null,
           "duration": 1217,
           "url": "https://www.youtube.com/watch?v=K9_M3AQJm5I"
@@ -320,13 +327,6 @@
           "published": null,
           "duration": 914,
           "url": "https://www.youtube.com/watch?v=hkhYI0hp1mU"
-        },
-        {
-          "video_id": "-mRfapYFyn4",
-          "title": "Fac VOCI doar cu FETE ! 👉👈",
-          "published": null,
-          "duration": 1553,
-          "url": "https://www.youtube.com/watch?v=-mRfapYFyn4"
         }
       ]
     },
