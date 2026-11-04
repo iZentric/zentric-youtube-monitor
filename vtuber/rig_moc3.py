@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import sys
 from pathlib import Path
 
 from PIL import Image
@@ -24,7 +25,7 @@ from rig_preview import (EXPRESSION_LAYERS, HEAD_DEGREES_PER_DEGREE_Z, HEAD_PX_P
 HERE = Path(__file__).parent
 RIG = HERE / "rig"
 
-ATLAS = 4096
+ATLAS = 4096          # implicit; `--atlas 2048` face varianta compatibilă
 CANVAS = (1024, 1024)
 
 # parametru: (min, max, default)
@@ -288,23 +289,37 @@ def _padded(tile: Image.Image) -> Image.Image:
     return Image.fromarray(out, "RGBA")
 
 
+# Atlasul nu încape la 2048 cu piesele la scară 1:1. La 2048 piesele se pun la
+# jumătate de rezoluție (geometria rămâne în spațiul 1024) — exact ce cere VTS când
+# raportează „texture resolution that high".
+TILE_SCALE = 1 if ATLAS >= 4096 else 0.5
+
+
 def pack(layers: dict[str, Image.Image]):
     """Așază fiecare strat decupat în atlas (rafturi), întoarce imaginea și regiunile."""
     atlas = Image.new("RGBA", (ATLAS, ATLAS), (0, 0, 0, 0))
     regions, x, y, shelf = {}, 0, 0, 0
+    items = []
     for name in DRAW:
         layer = layers[name]
         box = layer.getchannel("A").getbbox()
         if box is None:
             raise ValueError(f"strat gol: {name}")
-        tile = _padded(layer.crop(box))
+        crop = layer.crop(box)
+        if TILE_SCALE != 1:
+            crop = crop.resize((max(1, round(crop.width * TILE_SCALE)),
+                                max(1, round(crop.height * TILE_SCALE))), Image.LANCZOS)
+        items.append((name, box, _padded(crop)))
+    items.sort(key=lambda it: -it[2].height)          # rafturi: cele înalte primele
+    for name, box, tile in items:
         w, h = tile.size
         if x + w > ATLAS:
             x, y, shelf = 0, y + shelf, 0
         assert y + h <= ATLAS, f"atlas plin la {name}"
         atlas.paste(tile, (x, y))
-        regions[name] = (box[0], box[1], w - 2 * PAD, h - 2 * PAD, x + PAD, y + PAD,
-                         w - 2 * PAD, h - 2 * PAD)
+        # geometria rămâne în spațiul desenului (box), UV-urile în cel al piesei scalate
+        regions[name] = (box[0], box[1], box[2] - box[0], box[3] - box[1],
+                        x + PAD, y + PAD, w - 2 * PAD, h - 2 * PAD)
         x += w
         shelf = max(shelf, h)
     return atlas, regions
@@ -402,9 +417,18 @@ def moc3_keyforms(model) -> int:
     return total
 
 
-def main() -> int:
-    info = write_bundle(RIG)
-    print(f"scris rig/izentric.moc3 ({info['moc3_bytes']} octeti), {info['meshes']} mesh-uri, "
+def main(argv: list[str] | None = None) -> int:
+    """`python vtuber/rig_moc3.py [--atlas 2048] [--out vtuber/rig-2048]`"""
+    global ATLAS, TILE_SCALE
+    argv = list(argv if argv is not None else sys.argv[1:])
+    out = RIG
+    if "--atlas" in argv:
+        ATLAS = int(argv[argv.index("--atlas") + 1])
+        TILE_SCALE = 1 if ATLAS >= 4096 else 0.5
+    if "--out" in argv:
+        out = Path(argv[argv.index("--out") + 1])
+    info = write_bundle(out)
+    print(f"scris {out.name}/izentric.moc3 ({info['moc3_bytes']} octeti), {info['meshes']} mesh-uri, "
           f"{info['params']} parametri, {info['keyforms']} keyform-uri, atlas {ATLAS}px")
     return 0
 

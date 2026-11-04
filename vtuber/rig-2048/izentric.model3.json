@@ -1,0 +1,64 @@
+{
+  "Version": 3,
+  "FileReferences": {
+    "Moc": "izentric.moc3",
+    "Textures": [
+      "texture_00.png"
+    ],
+    "Physics": "izentric.physics3.json",
+    "DisplayInfo": "izentric.cdi3.json",
+    "Expressions": [
+      {
+        "Name": "Râs",
+        "File": "izentric.laugh.exp3.json"
+      },
+      {
+        "Name": "Îndrăgostit",
+        "File": "izentric.love.exp3.json"
+      },
+      {
+        "Name": "Trist",
+        "File": "izentric.sad.exp3.json"
+      },
+      {
+        "Name": "Șocat",
+        "File": "izentric.shocked.exp3.json"
+      },
+      {
+        "Name": "Suspicios",
+        "File": "izentric.sus.exp3.json"
+      },
+      {
+        "Name": "Coarne ascunse",
+        "File": "izentric.hornsoff.exp3.json"
+      }
+    ]
+  },
+  "Groups": [
+    {
+      "Target": "Parameter",
+      "Name": "LipSync",
+      "Ids": [
+        "ParamMouthOpenY"
+      ]
+    },
+    {
+      "Target": "Parameter",
+      "Name": "EyeBlink",
+      "Ids": [
+        "ParamEyeLOpen",
+        "ParamEyeROpen"
+      ]
+    }
+  ],
+  "HitAreas": [
+    {
+      "Id": "HitAreaHead",
+      "Name": "Head"
+    },
+    {
+      "Id": "HitAreaBody",
+      "Name": "Body"
+    }
+  ]
+}

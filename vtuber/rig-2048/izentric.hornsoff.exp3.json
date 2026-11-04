@@ -1,0 +1,12 @@
+{
+  "Type": "Live2D Expression",
+  "Parameters": [
+    {
+      "Id": "ParamHornsVis",
+      "Value": 0.0,
+      "Blend": "Overwrite"
+    }
+  ],
+  "FadeInTime": 0.15,
+  "FadeOutTime": 0.15
+}

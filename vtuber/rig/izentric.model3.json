@@ -5,6 +5,7 @@
     "Textures": [
       "texture_00.png"
     ],
+    "Physics": "izentric.physics3.json",
     "DisplayInfo": "izentric.cdi3.json",
     "Expressions": [
       {
@@ -26,6 +27,10 @@
       {
         "Name": "Suspicios",
         "File": "izentric.sus.exp3.json"
+      },
+      {
+        "Name": "Coarne ascunse",
+        "File": "izentric.hornsoff.exp3.json"
       }
     ]
   },
