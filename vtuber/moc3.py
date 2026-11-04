@@ -368,9 +368,14 @@ def build(m: Model) -> bytes:
     s["draw_order_group.object_begin_indices"] = [0]
     s["draw_order_group.object_counts"] = [n_mesh]
     s["draw_order_group.object_total_counts"] = [n_mesh]
-    _orders = [mesh.draw_order for mesh in m.meshes] or [500.0]
-    s["draw_order_group.min_draw_orders"] = [int(min(_orders))]
-    s["draw_order_group.max_draw_orders"] = [int(max(_orders))]
+    # ATENȚIE: `min_draw_orders`/`max_draw_orders` trebuie să fie 500 / 499.
+    # Orice altă pereche (ex. min/max calculate din ordinele reale) face Cubism Core
+    # să CRAPE la încărcare (SIGSEGV, nu mesaj de eroare) — dovedit prin bisecție:
+    #   w1 (toate ordinele egale) → ok; w2 (500/510/520, min=500 max=520) → crash;
+    #   w2 cu min=500 max=499 → ok. Modelul real ellot.moc3 are tot 500 / 499.
+    # Verificare: `python vtuber/check_moc3.py <fisier.moc3>`.
+    s["draw_order_group.min_draw_orders"] = [500]
+    s["draw_order_group.max_draw_orders"] = [499]
     s["draw_order_group_object.types"] = [0] * n_mesh
     s["draw_order_group_object.indices"] = [n_mesh - 1 - i for i in range(n_mesh)]
     s["draw_order_group_object.group_indices"] = [-1] * n_mesh

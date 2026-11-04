@@ -21,12 +21,15 @@ _Actualizat: 2026-11-04 · branch `arena/1c1bafd0-zentric-youtube-monitor` · co
 3. B1/B2: extrag „Rig Spec" din referințe, construiesc aceeași schemă pe iZentric.
 4. C1/C2: după confirmarea licenței (utilizatorul a spus „ale mele").
 
-## ⛔ Defect BLOCKER dovedit (2026-11-04)
-`.moc3`-ul scris de cod **nu e valid**: Cubism Core oficial (SDK 5-r.5) crapă la încărcare
-(`python vtuber/check_moc3.py vtuber/rig-2048/izentric.moc3` → `"ok": false, "error": "Core a
-respins fișierul (cod -11)"`; -11 = SIGSEGV). VTS crapă din același motiv.
-Textura NU era cauza: și la 2048 crapă la fel.
-Consecință: nici un model din lanțul Python nu poate fi încărcat până nu se repară scriitorul.
+## ✅ Defect BLOCKER rezolvat (2026-11-04)
+`.moc3`-ul scris de cod crăpa Cubism Core (SIGSEGV) și, prin el, VTube Studio.
+Cauza, găsită prin bisecție pe fișiere minime: `draw_order_group.min_draw_orders` /
+`max_draw_orders` scrise ca min/max reale. Corect: **500 / 499** (ca în `ellot.moc3`).
+Reparat în `vtuber/moc3.py`; ambele build-uri (4096 și 2048) trec acum
+`check_moc3.py` → `"ok": true`. Poartă nouă: `vtuber/test_moc3_core.py` (rulează Core).
+
+Modelele de referință se recuperează din istoric (nu stau în working tree):
+`git cat-file blob 9407095affef6b63d72cb487a26b1d2bad56e241 > ref/ellot.zip`
 
 ## Defecte deschise
 | # | severitate | defect | stare |

@@ -30,6 +30,15 @@ Toate regulile de mai jos sunt confirmate pe `ellot.moc3` (v4.2, model real care
   din `drawable_mask.art_mesh_indices` care se folosesc ca mască.
 - `drawable_flags` **nu** codifică mascarea (în ellot apare 4 și la mesh-uri mascate, și la cele nemascate).
 
+## Ordine de desenare — capcana care a crăpat VTS (dovedită prin bisecție)
+- `draw_order_group.min_draw_orders` = **500** și `max_draw_orders` = **499**, fix.
+  Orice altă pereche (inclusiv min/max calculate din ordinele reale ale mesh-urilor)
+  face Cubism Core să iasă cu **SIGSEGV** la încărcare — fără mesaj, fără cod de eroare.
+- Dovada (fișiere mici, aceleași date, diferă doar câmpul):
+  toate ordinele egale → `ok`; `500/510/520` cu `min=500,max=520` → crash;
+  același fișier cu `min=500,max=499` → `ok`. Modelul real `ellot.moc3` are tot `500/499`.
+- Ordinele per mesh (`art_mesh.draw_order`) și per keyform sunt libere — nu ele crapă.
+
 ## Verificare
 `python vtuber/check_moc3.py <fisier.moc3>` rulează Cubism Core într-un subproces și
 raportează parametrii, canvas-ul și dacă fișierul e acceptat. Un crash al Core = fișier respins.
