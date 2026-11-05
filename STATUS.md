@@ -40,6 +40,13 @@ Modelele de referință se recuperează din istoric (nu stau în working tree):
 - `vtuber/compose_eyes.py` leagă piesele/desenul de straturile modelului (înainte,
   piesele refăcute nu ajungeau niciodată în `.moc3`).
 
+## Două build-uri (2026-11-05)
+- `OUTPUT/A_original` → **varianta simplă** (`vtuber/rig-safe`): ochii sunt în stratul
+  `head`, fără mesh-uri `eye_L/eye_R`. Nu poate apărea „ochi acoperit" — nu mai există
+  strat de ochi care să poată fi acoperit. Renunță la privire + clipit.
+- `OUTPUT/A_cu_privire` → varianta cu mesh-uri de ochi (privire + clipit).
+- Ambele: `check_moc3` → ok, diferență față de desen ≈ 12 500 px>40 (medie ~5).
+
 ## Defecte deschise
 | # | severitate | defect | stare |
 |---|---|---|---|

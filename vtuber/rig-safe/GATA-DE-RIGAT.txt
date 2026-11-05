@@ -1,0 +1,54 @@
+GATA DE RIGAT — iZentric
+========================
+
+Ce ai in arhiva:
+  izentric.psd           - personajul tau, taiat in 9 bucati, pe straturi
+  izentric.rigspec.json  - lista cu ce sa misti (valorile sunt deja calculate)
+  izentric.model3.json   - fisierul care spune VTube Studio ce sa incarce
+  izentric.cdi3.json     - numele parametrilor (ochi, gura, cap)
+
+Ce iti trebuie:
+  1. Ayatsuri2D  (gratis, fara cont)  ->  ayatsuri-2d.org
+  2. VTube Studio (gratis, pe Steam)  ->  doar la final
+
+PASII, IN ORDINE:
+
+1. Instaleaza Ayatsuri2D.
+2. Deschide-l. File > Import PSD...  alege izentric.psd
+   -> fiecare strat apare ca o bucata. Nu muta nimic, e aliniat deja.
+3. Deschide izentric.rigspec.json cu Notepad, langa el.
+   Acolo scrie, pe scurt:
+     - faci 2 "warp deformer" si 1 "rotation deformer"
+     - legi capul de ParamAngleX / ParamAngleY / ParamAngleZ
+     - legi ochii de ParamEyeLOpen / ParamEyeROpen (opacitate 0 -> 100)
+     - legi globii oculari (eye_L / eye_R) de ParamEyeBallX / ParamEyeBallY
+       Clipping-ul e DEJA scris in PSD (eye_L lipit de eye_mask_L, eye_R de
+       eye_mask_R), deci nu trebuie pus de mana; daca editorul il pierde, pune-l
+       tu: „clip to layer below" pe fiecare glob, peste masca lui.
+     - legi gura de ParamMouthOpenY (opacitate 0 -> 100)
+4. NU schimba ordinea straturilor din PSD. Asa cum e, e corect:
+   FACE (ochi, gura, globii oculari + mastile lor) / BODY / HEAD / BACKING.
+   BODY sta DEASUPRA lui HEAD, ca gulerul sa acopere gatul cand capul se roteste.
+   BACKING e la fund: umple deschizatura husei, ca sa nu se vada fundalul.
+5. Expresii (ras, indragostit, trist, socat, suspicios):
+   - fiecare are parametrul ei (ParamExprLaugh ... ParamExprSus) care merge pe
+     opacitatea stratului expr_<nume> (0 -> 100)
+   - fisierele izentric.<nume>.exp3.json sunt deja in pachet si sunt trecute in
+     izentric.model3.json, deci VTube Studio le incarca singur: Settings >
+     Expressions / Hotkeys, pune fiecare expresie pe cate o tasta
+   - daca expresia nu apare: verifica sa fie in acelasi folder cu model3.json
+6. Export  ->  moc3, versiunea 5.0, cu model3.json si texturile bifate.
+7. Verifica (optional, dar recomandat):  python vtuber/check_model.py <folderul exportat>
+8. Pune folderul in:
+   C:\Users\<numele tau>\AppData\LocalLow\DenchiSoft\VTubeStudio\Live2DModels\izentric\
+9. Deschide VTube Studio, alege modelul, ruleaza Auto-Setup daca il cere.
+
+DACA CEVA NU MERGE:
+  - daca ochiul iese din gene -> lipseste clippingul globului (pasul 3)
+  - daca ochii nu clipesc     -> grupul EyeBlink nu e legat de ParamEyeLOpen/ROpen
+  - daca gura nu se miste     -> grupul LipSync nu e legat de ParamMouthOpenY
+  - daca modelul nu se incarca -> versiunea moc3 nu e 5.0, sau textura e peste 4096
+  - daca expresia nu se schimba -> parametrul ParamExpr... nu e legat de opacitatea
+    stratului expr_... (pasul 5), sau exp3 lipseste din folder
+
+Timp: 20-40 de minute.

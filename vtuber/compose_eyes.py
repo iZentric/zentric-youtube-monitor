@@ -63,7 +63,9 @@ def build_eyes_closed() -> None:
     alpha = E._dilate(ochi, 2)
     layer = np.zeros((E.H, E.W, 4), np.uint8)
     layer[alpha, :3] = blink[alpha, :3].astype(np.uint8)
-    a = Image.fromarray((alpha * 255).astype(np.uint8), "L").filter(ImageFilter.GaussianBlur(0.5))
+    # margine mai moale: la 0,5 px se vedea conturul dreptunghiular al petecului
+    # peste pielea capului (umbra desenului cu ochii închiși e ușor diferită)
+    a = Image.fromarray((alpha * 255).astype(np.uint8), "L").filter(ImageFilter.GaussianBlur(1.0))
     layer[..., 3] = np.asarray(a)
     Image.fromarray(layer, "RGBA").save(RIG / "eyes_closed.png")
     print(f"eyes_closed: {int(alpha.sum())} px din desenul cu ochii închiși")

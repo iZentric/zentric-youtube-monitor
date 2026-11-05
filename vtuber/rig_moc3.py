@@ -26,6 +26,7 @@ HERE = Path(__file__).parent
 RIG = HERE / "rig"
 
 ATLAS = 4096          # implicit; `--atlas 2048` face varianta compatibilă
+SKIP: set[str] = set()   # mesh-uri scoase din build (varianta „simplu")
 CANVAS = (1024, 1024)
 
 # parametru: (min, max, default)
@@ -330,6 +331,8 @@ def build(first_level: bool = False):
     atlas, regions = pack(layers)
     meshes, order = {}, []
     for draw_i, name in enumerate(DRAW):
+        if name in SKIP:
+            continue
         cols = rows = GRID[name]
         verts, uvs, tris = _grid(regions[name], cols, rows)
         # ordinea de desenare: DRAW merge din spate în față, iar în .moc3 valoarea mai
@@ -419,7 +422,7 @@ def moc3_keyforms(model) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     """`python vtuber/rig_moc3.py [--atlas 2048] [--out vtuber/rig-2048]`"""
-    global ATLAS, TILE_SCALE
+    global ATLAS, TILE_SCALE, RIG
     argv = list(argv if argv is not None else sys.argv[1:])
     out = RIG
     if "--atlas" in argv:
@@ -427,6 +430,10 @@ def main(argv: list[str] | None = None) -> int:
         TILE_SCALE = 1 if ATLAS >= 4096 else 0.5
     if "--out" in argv:
         out = Path(argv[argv.index("--out") + 1])
+    if "--rig" in argv:
+        RIG = Path(argv[argv.index("--rig") + 1])
+    if "--skip" in argv:
+        SKIP.update(argv[argv.index("--skip") + 1].split(","))
     info = write_bundle(out)
     print(f"scris {out.name}/izentric.moc3 ({info['moc3_bytes']} octeti), {info['meshes']} mesh-uri, "
           f"{info['params']} parametri, {info['keyforms']} keyform-uri, atlas {ATLAS}px")

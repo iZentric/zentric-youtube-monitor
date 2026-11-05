@@ -1,0 +1,280 @@
+{
+  "Version": 1,
+  "Name": "iZentric",
+  "ModelID": "be6dde4270ac7b001996ff09bff60cb9",
+  "FileReferences": {
+    "Icon": "",
+    "Model": "izentric.model3.json",
+    "IdleAnimation": "",
+    "IdleAnimationWhenTrackingLost": ""
+  },
+  "ParameterSettings": [
+    {
+      "Name": "Face Left/Right Rotation",
+      "Input": "FaceAngleX",
+      "OutputLive2D": "ParamAngleX",
+      "InputRangeLower": -40,
+      "InputRangeUpper": 40,
+      "OutputRangeLower": -30,
+      "OutputRangeUpper": 30,
+      "Smoothing": 15,
+      "UseBlinking": false,
+      "UseBreathing": false
+    },
+    {
+      "Name": "Face Up/Down Rotation",
+      "Input": "FaceAngleY",
+      "OutputLive2D": "ParamAngleY",
+      "InputRangeLower": -30,
+      "InputRangeUpper": 30,
+      "OutputRangeLower": -30,
+      "OutputRangeUpper": 30,
+      "Smoothing": 0,
+      "UseBlinking": false,
+      "UseBreathing": false
+    },
+    {
+      "Name": "Face Lean Rotation",
+      "Input": "FaceAngleZ",
+      "OutputLive2D": "ParamAngleZ",
+      "InputRangeLower": -35,
+      "InputRangeUpper": 35,
+      "OutputRangeLower": -30,
+      "OutputRangeUpper": 30,
+      "Smoothing": 30,
+      "UseBlinking": false,
+      "UseBreathing": false
+    },
+    {
+      "Name": "Body Rotation X",
+      "Input": "FaceAngleX",
+      "OutputLive2D": "ParamBodyAngleX",
+      "InputRangeLower": -40,
+      "InputRangeUpper": 40,
+      "OutputRangeLower": -10,
+      "OutputRangeUpper": 10,
+      "Smoothing": 20,
+      "UseBlinking": false,
+      "UseBreathing": false
+    },
+    {
+      "Name": "Body Rotation Z",
+      "Input": "FaceAngleZ",
+      "OutputLive2D": "ParamBodyAngleZ",
+      "InputRangeLower": -30,
+      "InputRangeUpper": 30,
+      "OutputRangeLower": -10,
+      "OutputRangeUpper": 10,
+      "Smoothing": 20,
+      "UseBlinking": false,
+      "UseBreathing": false
+    },
+    {
+      "Name": "Eye Open Left",
+      "Input": "EyeOpenLeft",
+      "OutputLive2D": "ParamEyeLOpen",
+      "InputRangeLower": 0,
+      "InputRangeUpper": 1,
+      "OutputRangeLower": 0,
+      "OutputRangeUpper": 1,
+      "Smoothing": 10,
+      "UseBlinking": false,
+      "UseBreathing": false
+    },
+    {
+      "Name": "Eye Open Right",
+      "Input": "EyeOpenRight",
+      "OutputLive2D": "ParamEyeROpen",
+      "InputRangeLower": 0,
+      "InputRangeUpper": 1,
+      "OutputRangeLower": 0,
+      "OutputRangeUpper": 1,
+      "Smoothing": 10,
+      "UseBlinking": false,
+      "UseBreathing": false
+    },
+    {
+      "Name": "Eye X",
+      "Input": "EyeRightX",
+      "OutputLive2D": "ParamEyeBallX",
+      "InputRangeLower": -1,
+      "InputRangeUpper": 1,
+      "OutputRangeLower": -1,
+      "OutputRangeUpper": 1,
+      "Smoothing": 8,
+      "UseBlinking": false,
+      "UseBreathing": false
+    },
+    {
+      "Name": "Eye Y",
+      "Input": "EyeRightY",
+      "OutputLive2D": "ParamEyeBallY",
+      "InputRangeLower": -1,
+      "InputRangeUpper": 1,
+      "OutputRangeLower": -1,
+      "OutputRangeUpper": 1,
+      "Smoothing": 8,
+      "UseBlinking": false,
+      "UseBreathing": false
+    },
+    {
+      "Name": "Mouth Open",
+      "Input": "MouthOpen",
+      "OutputLive2D": "ParamMouthOpenY",
+      "InputRangeLower": 0.03,
+      "InputRangeUpper": 0.7,
+      "OutputRangeLower": 0,
+      "OutputRangeUpper": 1,
+      "Smoothing": 0,
+      "UseBlinking": false,
+      "UseBreathing": false
+    },
+    {
+      "Name": "Auto Breath",
+      "Input": "",
+      "OutputLive2D": "ParamBreath",
+      "InputRangeLower": 0,
+      "InputRangeUpper": 1,
+      "OutputRangeLower": 0,
+      "OutputRangeUpper": 1,
+      "Smoothing": 0,
+      "UseBlinking": false,
+      "UseBreathing": true
+    },
+    {
+      "Name": "ParamExprLaugh",
+      "Input": "",
+      "OutputLive2D": "ParamExprLaugh",
+      "InputRangeLower": 0,
+      "InputRangeUpper": 1,
+      "OutputRangeLower": 0,
+      "OutputRangeUpper": 1,
+      "Smoothing": 20,
+      "UseBlinking": false,
+      "UseBreathing": false
+    },
+    {
+      "Name": "ParamExprLove",
+      "Input": "",
+      "OutputLive2D": "ParamExprLove",
+      "InputRangeLower": 0,
+      "InputRangeUpper": 1,
+      "OutputRangeLower": 0,
+      "OutputRangeUpper": 1,
+      "Smoothing": 20,
+      "UseBlinking": false,
+      "UseBreathing": false
+    },
+    {
+      "Name": "ParamExprSad",
+      "Input": "",
+      "OutputLive2D": "ParamExprSad",
+      "InputRangeLower": 0,
+      "InputRangeUpper": 1,
+      "OutputRangeLower": 0,
+      "OutputRangeUpper": 1,
+      "Smoothing": 20,
+      "UseBlinking": false,
+      "UseBreathing": false
+    },
+    {
+      "Name": "ParamExprShocked",
+      "Input": "",
+      "OutputLive2D": "ParamExprShocked",
+      "InputRangeLower": 0,
+      "InputRangeUpper": 1,
+      "OutputRangeLower": 0,
+      "OutputRangeUpper": 1,
+      "Smoothing": 20,
+      "UseBlinking": false,
+      "UseBreathing": false
+    },
+    {
+      "Name": "ParamExprSus",
+      "Input": "",
+      "OutputLive2D": "ParamExprSus",
+      "InputRangeLower": 0,
+      "InputRangeUpper": 1,
+      "OutputRangeLower": 0,
+      "OutputRangeUpper": 1,
+      "Smoothing": 20,
+      "UseBlinking": false,
+      "UseBreathing": false
+    }
+  ],
+  "Hotkeys": [
+    {
+      "Name": "Râs",
+      "Action": "ToggleExpression",
+      "File": "izentric.laugh.exp3.json",
+      "Trigger": {}
+    },
+    {
+      "Name": "Îndrăgostit",
+      "Action": "ToggleExpression",
+      "File": "izentric.love.exp3.json",
+      "Trigger": {}
+    },
+    {
+      "Name": "Trist",
+      "Action": "ToggleExpression",
+      "File": "izentric.sad.exp3.json",
+      "Trigger": {}
+    },
+    {
+      "Name": "Șocat",
+      "Action": "ToggleExpression",
+      "File": "izentric.shocked.exp3.json",
+      "Trigger": {}
+    },
+    {
+      "Name": "Suspicios",
+      "Action": "ToggleExpression",
+      "File": "izentric.sus.exp3.json",
+      "Trigger": {}
+    },
+    {
+      "Name": "Coarne ascunse",
+      "Action": "ToggleExpression",
+      "File": "izentric.hornsoff.exp3.json",
+      "Trigger": {}
+    },
+    {
+      "Name": "Șterge toate expresiile",
+      "Action": "RemoveAllExpressions",
+      "File": "",
+      "Trigger": {}
+    }
+  ],
+  "ArtMeshDetails": {
+    "ArtMeshesExcludedFromPinning": [],
+    "ArtMeshesThatDeleteItemsOnDrop": [],
+    "ArtMeshSceneLightingMultipliers": [],
+    "ArtMeshMultiplyAndScreenColors": []
+  },
+  "ItemSettings": {
+    "OnlyMoveWhenPinned": false,
+    "AllowNormalHotkeyTriggers": true,
+    "Multiplier_HeadAngleX": 1.0,
+    "Multiplier_HeadAngleY": 1.0,
+    "Multiplier_HeadAngleZ": 1.0,
+    "Shift_HeadAngleX": 0.0,
+    "Shift_HeadAngleY": 0.0,
+    "Smoothing_HeadAngleX": 15.0,
+    "Smoothing_HeadAngleY": 15.0,
+    "Smoothing_HeadAngleZ": 15.0
+  },
+  "GeneralSettings": {
+    "TimeUntilTrackingLostIdleAnimation": 0.0,
+    "WorkshopSharingForbidden": true,
+    "EnableExpressionSaving": false
+  },
+  "PhysicsSettings": {
+    "Use": true,
+    "UseLegacyPhysics": false,
+    "Live2DPhysicsFPS": 3,
+    "PhysicsStrength": 50,
+    "WindStrength": 0,
+    "DraggingPhysicsStrength": 49
+  }
+}

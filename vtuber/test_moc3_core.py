@@ -21,7 +21,7 @@ sys.path.insert(0, str(HERE))
 import check_moc3  # noqa: E402
 import validate_moc3  # noqa: E402
 
-BUILD_DIRS = [HERE / "rig", HERE / "rig-2048"]
+BUILD_DIRS = [HERE / "rig", HERE / "rig-2048", HERE / "rig-safe"]
 
 
 def _builds():
@@ -55,3 +55,29 @@ def test_ordine_de_desanare_in_sentinel():
                            ("draw_order_group.max_draw_orders", 499)):
             assert m.sec[name] == [want], f"{build.name}: {name} = {m.sec[name]} (trebuie {want})"
         assert len(SECTION_LAYOUT) == 99
+
+
+def test_varianta_simpla_are_ochii_in_cap():
+    """Varianta „simplu" nu are mesh-uri de ochi: ochii stau în stratul capului.
+
+    Dacă apar din nou mesh-uri eye_L/eye_R acolo, revine riscul ca un strat de
+    deasupra să acopere un ochi (pata albă văzută în VTube Studio).
+    """
+    from pathlib import Path
+
+    rig = Path(__file__).resolve().parent / "rig-safe"
+    moc = rig / "izentric.moc3"
+    if not moc.exists():
+        pytest.skip("build-ul rig-safe nu există")
+    m = validate_moc3.M(str(moc))
+    ids = m.sec["art_mesh.ids"]
+    assert "eye_L" not in ids and "eye_R" not in ids, f"mesh-uri de ochi în rig-safe: {ids}"
+
+    # capul trebuie să conțină culoarea irisului (altfel ochiul e alb)
+    from PIL import Image
+    import numpy as np
+    head = np.asarray(Image.open(rig / "head.png").convert("RGBA"))
+    albastru = (head[..., 2] > head[..., 0] + 30) & (head[..., 2] > 90)
+    rosu = (head[..., 0] > head[..., 2] + 40) & (head[..., 0] > 90) & (head[..., 1] < 90)
+    assert int(albastru.sum()) > 1500, f"iris albastru lipsește din cap ({int(albastru.sum())} px)"
+    assert int(rosu.sum()) > 1500, f"iris roșu lipsește din cap ({int(rosu.sum())} px)"
