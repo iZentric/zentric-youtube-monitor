@@ -23,8 +23,8 @@ HERE = Path(__file__).parent
 RIG = HERE / "rig"
 ASSETS = HERE / "assets"
 
-LAYER_FILES = ("backing", "head", "body", "eye_L", "eye_R", "eyes_closed", "mouth_open",
-               "eye_mask_L", "eye_mask_R",
+LAYER_FILES = ("backing", "head", "body", "iris_L", "iris_R", "eye_L", "eye_R", "eyes_closed",
+               "mouth_open", "eye_mask_L", "eye_mask_R",
                "expr_laugh", "expr_love", "expr_sad", "expr_shocked", "expr_sus")
 EXPRESSION_LAYERS = ("expr_laugh", "expr_love", "expr_sad", "expr_shocked", "expr_sus")
 
@@ -48,7 +48,9 @@ def smoothstep(value: float) -> float:
 def load_layers(directory: Path = RIG) -> dict[str, Image.Image]:
     layers = {}
     for name in LAYER_FILES:
-        layers[name] = Image.open(directory / f"{name}.png").convert("RGBA")
+        path = directory / f"{name}.png"      # irisul există doar în varianta cu iris separat
+        if path.exists():
+            layers[name] = Image.open(path).convert("RGBA")
     return layers
 
 

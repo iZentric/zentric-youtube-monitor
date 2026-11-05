@@ -48,7 +48,7 @@ DRAW = ["backing", "body", "head", "horns", "eye_L", "eye_R",
         "mouth_open", "eyes_closed"]
 # numele din .moc3: zonele de click trebuie să aibă exact ID-ul din HitAreas
 MESH_ID = {"head": "HitAreaHead", "body": "HitAreaBody"}
-GRID = {"horns": 6, "head": 10, "body": 8, "eye_L": 6, "eye_R": 6, "eye_mask_L": 4, "eye_mask_R": 4,
+GRID = {"horns": 6, "head": 10, "body": 8, "eye_L": 6, "eye_R": 6, "iris_L": 6, "iris_R": 6, "eye_mask_L": 4, "eye_mask_R": 4,
         "eyes_closed": 7, "mouth_open": 5, "backing": 4,
         "expr_laugh": 7, "expr_love": 7, "expr_sad": 7, "expr_shocked": 7, "expr_sus": 7}
 
@@ -64,8 +64,13 @@ KEYS = {
     "ParamExprShocked": [0.0, 1.0], "ParamExprSus": [0.0, 1.0],
 }
 
-HEAD_LAYERS = {"head", "horns", "eye_L", "eye_R", "eye_mask_L", "eye_mask_R", "eyes_closed", "mouth_open",
-               *EXPRESSION_LAYERS}
+HEAD_LAYERS = {"head", "horns", "eye_L", "eye_R", "iris_L", "iris_R", "eye_mask_L", "eye_mask_R",
+               "eyes_closed", "mouth_open", *EXPRESSION_LAYERS}
+
+# iris decupat pe elipsă, ca mesh separat: se mișcă doar el, sclera rămâne în `head`
+IRIS_LAYERS = ("iris_L", "iris_R")
+IRIS_PX = 6.0        # cât se poate deplasa irisul pentru ParamEyeBallX/Y = ±1
+IRIS = False         # pornit cu `--iris`
 
 
 def head_point(x: float, y: float, ax: float, ay: float, az: float, hair: float = 0.0):
@@ -296,12 +301,14 @@ def _padded(tile: Image.Image) -> Image.Image:
 TILE_SCALE = 1 if ATLAS >= 4096 else 0.5
 
 
-def pack(layers: dict[str, Image.Image]):
+def pack(layers: dict[str, Image.Image], draw_order: list[str]):
     """Așază fiecare strat decupat în atlas (rafturi), întoarce imaginea și regiunile."""
     atlas = Image.new("RGBA", (ATLAS, ATLAS), (0, 0, 0, 0))
     regions, x, y, shelf = {}, 0, 0, 0
     items = []
-    for name in DRAW:
+    for name in draw_order:
+        if name in SKIP:                   # nu umple atlasul cu straturi nefolosite
+            continue
         layer = layers[name]
         box = layer.getchannel("A").getbbox()
         if box is None:
@@ -328,9 +335,13 @@ def pack(layers: dict[str, Image.Image]):
 
 def build(first_level: bool = False):
     layers = split_horns(load_layers(RIG))
-    atlas, regions = pack(layers)
+    draw_order = list(DRAW)
+    if IRIS:                                   # irisul stă în locul ochilor, sub pleoape
+        at = draw_order.index("eye_L")
+        draw_order[at:at] = list(IRIS_LAYERS)
+    atlas, regions = pack(layers, draw_order)
     meshes, order = {}, []
-    for draw_i, name in enumerate(DRAW):
+    for draw_i, name in enumerate(draw_order):
         if name in SKIP:
             continue
         cols = rows = GRID[name]
@@ -345,8 +356,9 @@ def build(first_level: bool = False):
                         Binding(P["ParamAngleY"], KEYS["ParamAngleY"]),
                         Binding(P["ParamAngleZ"], KEYS["ParamAngleZ"])]
             extra = None
-            if name in ("eye_L", "eye_R"):
-                extra = (("ParamEyeBallX", IRIS_PX_X), ("ParamEyeBallY", IRIS_PX_Y))
+            if name in ("eye_L", "eye_R", *IRIS_LAYERS):
+                span = IRIS_PX if name in IRIS_LAYERS else IRIS_PX_X
+                extra = (("ParamEyeBallX", span), ("ParamEyeBallY", span))
                 bindings += [Binding(P["ParamEyeBallX"], KEYS["ParamEyeBallX"]),
                              Binding(P["ParamEyeBallY"], KEYS["ParamEyeBallY"])]
             if name == "head":
@@ -396,7 +408,8 @@ def build(first_level: bool = False):
     model = Model(canvas=CANVAS, parts=["PartCap", "PartCorp"],
                   params=[tuple(p) for p in PARAMS],
                   meshes=[meshes[n] for n in order])
-    model.meshes[DRAW.index("eye_L")].part = 0
+    if "eye_L" in order:
+        model.meshes[order.index("eye_L")].part = 0
     return model, atlas
 
 
@@ -422,7 +435,7 @@ def moc3_keyforms(model) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     """`python vtuber/rig_moc3.py [--atlas 2048] [--out vtuber/rig-2048]`"""
-    global ATLAS, TILE_SCALE, RIG
+    global ATLAS, TILE_SCALE, RIG, IRIS
     argv = list(argv if argv is not None else sys.argv[1:])
     out = RIG
     if "--atlas" in argv:
@@ -432,6 +445,8 @@ def main(argv: list[str] | None = None) -> int:
         out = Path(argv[argv.index("--out") + 1])
     if "--rig" in argv:
         RIG = Path(argv[argv.index("--rig") + 1])
+    if "--iris" in argv:
+        IRIS = True
     if "--skip" in argv:
         SKIP.update(argv[argv.index("--skip") + 1].split(","))
     info = write_bundle(out)

@@ -1,0 +1,142 @@
+{
+  "Version": 3,
+  "Parameters": [
+    {
+      "Id": "ParamAngleX",
+      "GroupId": "ParamGroupFace",
+      "Name": "ParamAngleX"
+    },
+    {
+      "Id": "ParamAngleY",
+      "GroupId": "ParamGroupFace",
+      "Name": "ParamAngleY"
+    },
+    {
+      "Id": "ParamAngleZ",
+      "GroupId": "ParamGroupFace",
+      "Name": "ParamAngleZ"
+    },
+    {
+      "Id": "ParamBodyAngleX",
+      "GroupId": "ParamGroupBody",
+      "Name": "ParamBodyAngleX"
+    },
+    {
+      "Id": "ParamBodyAngleZ",
+      "GroupId": "ParamGroupBody",
+      "Name": "ParamBodyAngleZ"
+    },
+    {
+      "Id": "ParamEyeLOpen",
+      "GroupId": "ParamGroupEyes",
+      "Name": "ParamEyeLOpen"
+    },
+    {
+      "Id": "ParamEyeROpen",
+      "GroupId": "ParamGroupEyes",
+      "Name": "ParamEyeROpen"
+    },
+    {
+      "Id": "ParamEyeBallX",
+      "GroupId": "ParamGroupEyes",
+      "Name": "ParamEyeBallX"
+    },
+    {
+      "Id": "ParamEyeBallY",
+      "GroupId": "ParamGroupEyes",
+      "Name": "ParamEyeBallY"
+    },
+    {
+      "Id": "ParamMouthOpenY",
+      "GroupId": "ParamGroupMouth",
+      "Name": "ParamMouthOpenY"
+    },
+    {
+      "Id": "ParamBreath",
+      "GroupId": "ParamGroupBody",
+      "Name": "ParamBreath"
+    },
+    {
+      "Id": "ParamHairSwayX",
+      "GroupId": "ParamGroupHair",
+      "Name": "ParamHairSwayX"
+    },
+    {
+      "Id": "ParamHornsVis",
+      "GroupId": "ParamGroupAccessories",
+      "Name": "ParamHornsVis"
+    },
+    {
+      "Id": "ParamExprLaugh",
+      "GroupId": "ParamGroupExpressions",
+      "Name": "ParamExprLaugh"
+    },
+    {
+      "Id": "ParamExprLove",
+      "GroupId": "ParamGroupExpressions",
+      "Name": "ParamExprLove"
+    },
+    {
+      "Id": "ParamExprSad",
+      "GroupId": "ParamGroupExpressions",
+      "Name": "ParamExprSad"
+    },
+    {
+      "Id": "ParamExprShocked",
+      "GroupId": "ParamGroupExpressions",
+      "Name": "ParamExprShocked"
+    },
+    {
+      "Id": "ParamExprSus",
+      "GroupId": "ParamGroupExpressions",
+      "Name": "ParamExprSus"
+    }
+  ],
+  "ParameterGroups": [
+    {
+      "Id": "ParamGroupFace",
+      "GroupId": "",
+      "Name": "Față"
+    },
+    {
+      "Id": "ParamGroupEyes",
+      "GroupId": "",
+      "Name": "Ochi"
+    },
+    {
+      "Id": "ParamGroupMouth",
+      "GroupId": "",
+      "Name": "Gură"
+    },
+    {
+      "Id": "ParamGroupBody",
+      "GroupId": "",
+      "Name": "Corp"
+    },
+    {
+      "Id": "ParamGroupHair",
+      "GroupId": "",
+      "Name": "Păr"
+    },
+    {
+      "Id": "ParamGroupAccessories",
+      "GroupId": "",
+      "Name": "Accesorii"
+    },
+    {
+      "Id": "ParamGroupExpressions",
+      "GroupId": "",
+      "Name": "Expresii"
+    }
+  ],
+  "Parts": [
+    {
+      "Id": "PartCap",
+      "Name": "Cap"
+    },
+    {
+      "Id": "PartCorp",
+      "Name": "Corp"
+    }
+  ]
+}
