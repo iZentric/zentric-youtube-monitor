@@ -173,6 +173,9 @@ class Mesh:
     keyform_opacities: list[float] = field(default_factory=list)
     # ordinea de desenare: 0–1000, valoarea mai MARE stă mai în față (Cubism)
     draw_order: float = 500.0
+    # zonele de click (HitAreas) sunt art mesh-uri, dar nu trebuie DEDUSE niciodată:
+    # în VTS se vedeau ca o pată albă peste un ochi (ordinea egală se rezolva altfel).
+    visible: bool = True
 
 
 @dataclass
@@ -313,7 +316,7 @@ def build(m: Model) -> bytes:
     s["art_mesh.keyform_binding_band_indices"] = list(range(n_mesh))
     s["art_mesh.keyform_begin_indices"] = mesh_kf_begin
     s["art_mesh.keyform_counts"] = mesh_kf_count
-    s["art_mesh.visibles"] = [True] * n_mesh
+    s["art_mesh.visibles"] = [mesh.visible for mesh in m.meshes]
     s["art_mesh.enables"] = [True] * n_mesh
     s["art_mesh.parent_part_indices"] = [mesh.part for mesh in m.meshes]
     s["art_mesh.parent_deformer_indices"] = [-1] * n_mesh
@@ -377,7 +380,11 @@ def build(m: Model) -> bytes:
     s["draw_order_group.min_draw_orders"] = [500]
     s["draw_order_group.max_draw_orders"] = [499]
     s["draw_order_group_object.types"] = [0] * n_mesh
-    s["draw_order_group_object.indices"] = [n_mesh - 1 - i for i in range(n_mesh)]
+    # `indices[k]` = rangul obiectului k în ordinea de desenare (0 = cel mai din spate).
+    # Înainte scriam invers (n-1-i) — o ordine care nu se potrivea cu a niciunui model
+    # real: în `ellot.moc3` tabloul e o permutare, nu o inversare.
+    _rang = {i: r for r, i in enumerate(sorted(range(n_mesh), key=lambda i: m.meshes[i].draw_order))}
+    s["draw_order_group_object.indices"] = [_rang[i] for i in range(n_mesh)]
     s["draw_order_group_object.group_indices"] = [-1] * n_mesh
 
     body = b""
