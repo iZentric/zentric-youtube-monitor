@@ -1,0 +1,32 @@
+{
+  "Type": "Live2D Expression",
+  "Parameters": [
+    {
+      "Id": "ParamExprLaugh",
+      "Value": 0.0,
+      "Blend": "Overwrite"
+    },
+    {
+      "Id": "ParamExprLove",
+      "Value": 0.0,
+      "Blend": "Overwrite"
+    },
+    {
+      "Id": "ParamExprSad",
+      "Value": 0.0,
+      "Blend": "Overwrite"
+    },
+    {
+      "Id": "ParamExprShocked",
+      "Value": 0.0,
+      "Blend": "Overwrite"
+    },
+    {
+      "Id": "ParamExprSus",
+      "Value": 1.0,
+      "Blend": "Overwrite"
+    }
+  ],
+  "FadeInTime": 0.2,
+  "FadeOutTime": 0.2
+}

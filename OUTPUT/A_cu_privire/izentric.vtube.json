@@ -3,9 +3,9 @@
   "Name": "iZentric",
   "ModelID": "be6dde4270ac7b001996ff09bff60cb9",
   "FileReferences": {
-    "Icon": "",
+    "Icon": "icon.png",
     "Model": "izentric.model3.json",
-    "IdleAnimation": "",
+    "IdleAnimation": "izentric.idle.motion3.json",
     "IdleAnimationWhenTrackingLost": ""
   },
   "ParameterSettings": [

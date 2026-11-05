@@ -1,0 +1,415 @@
+{
+  "canvas": {
+    "width": 1024,
+    "height": 1024,
+    "pivot_neck": [
+      512,
+      655
+    ]
+  },
+  "standard": "Live2D Cubism model3 / moc3 5.0",
+  "draw_order": [
+    "eye_L",
+    "eye_mask_L",
+    "eye_R",
+    "eye_mask_R",
+    "expr_laugh",
+    "expr_love",
+    "expr_sad",
+    "expr_shocked",
+    "expr_sus",
+    "mouth_open",
+    "eyes_closed",
+    "body",
+    "head",
+    "backing"
+  ],
+  "clipping": {
+    "eye_L": "eye_mask_L",
+    "eye_R": "eye_mask_R"
+  },
+  "deformers": [
+    {
+      "id": "D_Root",
+      "type": "root",
+      "children": [
+        "D_HeadRot",
+        "D_Body"
+      ]
+    },
+    {
+      "id": "D_Body",
+      "type": "warp",
+      "layers": [
+        "body"
+      ],
+      "pivot": [
+        512,
+        900
+      ],
+      "parameters": [
+        "ParamBodyAngleX",
+        "ParamBodyAngleZ",
+        "ParamBreath"
+      ]
+    },
+    {
+      "id": "D_HeadRot",
+      "type": "rotation",
+      "parent": "D_Root",
+      "layers": [
+        "head"
+      ],
+      "pivot": [
+        512,
+        655
+      ],
+      "parameters": [
+        "ParamAngleZ"
+      ]
+    },
+    {
+      "id": "D_HeadWarp",
+      "type": "warp",
+      "parent": "D_HeadRot",
+      "layers": [
+        "head",
+        "eye_L",
+        "eye_R",
+        "eyes_closed",
+        "mouth_open",
+        "expr_laugh",
+        "expr_love",
+        "expr_sad",
+        "expr_shocked",
+        "expr_sus"
+      ],
+      "pivot": [
+        512,
+        430
+      ],
+      "parameters": [
+        "ParamAngleX",
+        "ParamAngleY"
+      ]
+    }
+  ],
+  "keyforms": {
+    "ParamAngleX": [
+      {
+        "value": -30,
+        "deformer": "D_HeadWarp",
+        "translate": [
+          -14,
+          0
+        ]
+      },
+      {
+        "value": 0,
+        "deformer": "D_HeadWarp",
+        "translate": [
+          0,
+          0
+        ]
+      },
+      {
+        "value": 30,
+        "deformer": "D_HeadWarp",
+        "translate": [
+          14,
+          0
+        ]
+      }
+    ],
+    "ParamAngleY": [
+      {
+        "value": -30,
+        "deformer": "D_HeadWarp",
+        "translate": [
+          0,
+          10
+        ]
+      },
+      {
+        "value": 0,
+        "deformer": "D_HeadWarp",
+        "translate": [
+          0,
+          0
+        ]
+      },
+      {
+        "value": 30,
+        "deformer": "D_HeadWarp",
+        "translate": [
+          0,
+          -10
+        ]
+      }
+    ],
+    "ParamAngleZ": [
+      {
+        "value": -30,
+        "deformer": "D_HeadRot",
+        "rotate": -8
+      },
+      {
+        "value": 0,
+        "deformer": "D_HeadRot",
+        "rotate": 0
+      },
+      {
+        "value": 30,
+        "deformer": "D_HeadRot",
+        "rotate": 8
+      }
+    ],
+    "ParamEyeLOpen": [
+      {
+        "value": 0,
+        "layer": "eyes_closed",
+        "opacity": 100
+      },
+      {
+        "value": 1,
+        "layer": "eyes_closed",
+        "opacity": 0
+      }
+    ],
+    "ParamEyeROpen": [
+      {
+        "value": 0,
+        "layer": "eyes_closed",
+        "opacity": 100
+      },
+      {
+        "value": 1,
+        "layer": "eyes_closed",
+        "opacity": 0
+      }
+    ],
+    "ParamEyeBallX": [
+      {
+        "value": -1,
+        "layers": [
+          "eye_L",
+          "eye_R"
+        ],
+        "translate": [
+          -3,
+          0
+        ]
+      },
+      {
+        "value": 0,
+        "layers": [
+          "eye_L",
+          "eye_R"
+        ],
+        "translate": [
+          0,
+          0
+        ]
+      },
+      {
+        "value": 1,
+        "layers": [
+          "eye_L",
+          "eye_R"
+        ],
+        "translate": [
+          3,
+          0
+        ]
+      }
+    ],
+    "ParamEyeBallY": [
+      {
+        "value": -1,
+        "layers": [
+          "eye_L",
+          "eye_R"
+        ],
+        "translate": [
+          0,
+          -3
+        ]
+      },
+      {
+        "value": 0,
+        "layers": [
+          "eye_L",
+          "eye_R"
+        ],
+        "translate": [
+          0,
+          0
+        ]
+      },
+      {
+        "value": 1,
+        "layers": [
+          "eye_L",
+          "eye_R"
+        ],
+        "translate": [
+          0,
+          3
+        ]
+      }
+    ],
+    "ParamMouthOpenY": [
+      {
+        "value": 0,
+        "layer": "mouth_open",
+        "opacity": 0
+      },
+      {
+        "value": 1,
+        "layer": "mouth_open",
+        "opacity": 100
+      }
+    ],
+    "ParamBodyAngleX": [
+      {
+        "value": -10,
+        "deformer": "D_Body",
+        "translate": [
+          -6,
+          0
+        ]
+      },
+      {
+        "value": 0,
+        "deformer": "D_Body",
+        "translate": [
+          0,
+          0
+        ]
+      },
+      {
+        "value": 10,
+        "deformer": "D_Body",
+        "translate": [
+          6,
+          0
+        ]
+      }
+    ],
+    "ParamBreath": [
+      {
+        "value": 0,
+        "deformer": "D_Body",
+        "translate": [
+          0,
+          0
+        ]
+      },
+      {
+        "value": 1,
+        "deformer": "D_Body",
+        "translate": [
+          0,
+          -3
+        ]
+      }
+    ],
+    "ParamExprLaugh": [
+      {
+        "value": 0,
+        "layer": "expr_laugh",
+        "opacity": 0
+      },
+      {
+        "value": 1,
+        "layer": "expr_laugh",
+        "opacity": 100
+      }
+    ],
+    "ParamExprLove": [
+      {
+        "value": 0,
+        "layer": "expr_love",
+        "opacity": 0
+      },
+      {
+        "value": 1,
+        "layer": "expr_love",
+        "opacity": 100
+      }
+    ],
+    "ParamExprSad": [
+      {
+        "value": 0,
+        "layer": "expr_sad",
+        "opacity": 0
+      },
+      {
+        "value": 1,
+        "layer": "expr_sad",
+        "opacity": 100
+      }
+    ],
+    "ParamExprShocked": [
+      {
+        "value": 0,
+        "layer": "expr_shocked",
+        "opacity": 0
+      },
+      {
+        "value": 1,
+        "layer": "expr_shocked",
+        "opacity": 100
+      }
+    ],
+    "ParamExprSus": [
+      {
+        "value": 0,
+        "layer": "expr_sus",
+        "opacity": 0
+      },
+      {
+        "value": 1,
+        "layer": "expr_sus",
+        "opacity": 100
+      }
+    ]
+  },
+  "expressions": [
+    {
+      "name": "laugh",
+      "parameter": "ParamExprLaugh",
+      "label": "Râs",
+      "file": "izentric.laugh.exp3.json"
+    },
+    {
+      "name": "love",
+      "parameter": "ParamExprLove",
+      "label": "Îndrăgostit",
+      "file": "izentric.love.exp3.json"
+    },
+    {
+      "name": "sad",
+      "parameter": "ParamExprSad",
+      "label": "Trist",
+      "file": "izentric.sad.exp3.json"
+    },
+    {
+      "name": "shocked",
+      "parameter": "ParamExprShocked",
+      "label": "Șocat",
+      "file": "izentric.shocked.exp3.json"
+    },
+    {
+      "name": "sus",
+      "parameter": "ParamExprSus",
+      "label": "Suspicios",
+      "file": "izentric.sus.exp3.json"
+    }
+  ],
+  "notes": [
+    "eyes_closed și mouth_open se pot lega și pe opacitate (mai simplu) sau pe clipping (mai curat).",
+    "eye_L / eye_R au nevoie de clipping pe eye_mask_L / eye_mask_R, altfel iese ochiul din gene.",
+    "Sprâncenele sunt desenate în cap: ParamBrowLY/RY există în cdi3, dar nu au ce mișca până nu sunt pe strat separat."
+  ]
+}
