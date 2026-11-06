@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-11-05T14:10:43.204507+00:00",
+  "fetched_at": "2026-11-06T13:52:42.927993+00:00",
   "channels": [
     {
       "name": "Zentric Minecraft",
@@ -22,7 +22,7 @@
         },
         {
           "video_id": "3x0DheW5lcI",
-          "title": "POKECITY?! ?? Ep. 1 | NOUL SMP CU POKEMONI alaturi de NOCIVANU'!",
+          "title": "POKECITY?! ?? Ep. 1 | THE NEW POKEMON SMP with NOCIVANU!",
           "published": null,
           "duration": 2153,
           "url": "https://www.youtube.com/watch?v=3x0DheW5lcI"
@@ -43,7 +43,7 @@
         },
         {
           "video_id": "l8YWOqTS8Hg",
-          "title": "SuperCity ! SUNT PREA RAPID! AM FACUT COSTUMUL LUI FLASH",
+          "title": "SuperCity! I'M TOO FAST! I MADE THE FLASH COSTUME",
           "published": null,
           "duration": 374,
           "url": "https://www.youtube.com/watch?v=l8YWOqTS8Hg"
@@ -57,7 +57,7 @@
         },
         {
           "video_id": "SCYPFmn-E8o",
-          "title": "AM GĂSIT TOT AURUL DIN SUPERCITY PENTRU COSTUMUL LUI MYSTERIO! ⛔️",
+          "title": "I FOUND ALL THE GOLD IN SUPERCITY FOR THE MYSTERIO SKIN! ⛔️",
           "published": null,
           "duration": 1437,
           "url": "https://www.youtube.com/watch?v=SCYPFmn-E8o"
@@ -71,14 +71,14 @@
         },
         {
           "video_id": "kgSoNWKmLpc",
-          "title": "NIMENI NU MA MAI POATE ATINGE CU ACEST COSTUM II!",
+          "title": "NO ONE CAN TOUCH ME ANYMORE WITH THIS SUIT II!",
           "published": null,
           "duration": 1200,
           "url": "https://www.youtube.com/watch?v=kgSoNWKmLpc"
         },
         {
           "video_id": "oJMhaYI6I04",
-          "title": "AM JUCAT HIDE & SEEK PE SUPERCITY CU NOCIVANU!",
+          "title": "WE PLAYED HIDE & SEEK ON SUPERCITY WITH NOCIVANU!",
           "published": null,
           "duration": 886,
           "url": "https://www.youtube.com/watch?v=oJMhaYI6I04"
@@ -111,6 +111,13 @@
       "channel_id": "UCGh69zTKqqo4vPIJOndt32w",
       "channel_url": "https://www.youtube.com/channel/UCGh69zTKqqo4vPIJOndt32w",
       "latest": [
+        {
+          "video_id": "BHzdeo0DgiY",
+          "title": "Geometry Dash..........................................",
+          "published": null,
+          "duration": 1219,
+          "url": "https://www.youtube.com/watch?v=BHzdeo0DgiY"
+        },
         {
           "video_id": "d-F418lfHOs",
           "title": "Cleaning the MOON of Dust..",
@@ -208,13 +215,6 @@
           "published": null,
           "duration": 1760,
           "url": "https://www.youtube.com/watch?v=_xV4H5MmrZ8"
-        },
-        {
-          "video_id": "tdwiw7Ursss",
-          "title": "Want some fries?",
-          "published": null,
-          "duration": 2899,
-          "url": "https://www.youtube.com/watch?v=tdwiw7Ursss"
         }
       ]
     },
@@ -224,8 +224,15 @@
       "channel_url": "https://www.youtube.com/channel/UC7Tmdxj18fdu4tTtxVUhoCA",
       "latest": [
         {
+          "video_id": "hQlUXBAYaVo",
+          "title": "Cum sa SCAP din PARCUL din OHIO ?",
+          "published": null,
+          "duration": 1467,
+          "url": "https://www.youtube.com/watch?v=hQlUXBAYaVo"
+        },
+        {
           "video_id": "kWFmp5cT3_A",
-          "title": "Secretul din BECIUL de CARTOFI..",
+          "title": "Am GASIT cine FURA CARTOFII !",
           "published": null,
           "duration": 1386,
           "url": "https://www.youtube.com/watch?v=kWFmp5cT3_A"
@@ -281,7 +288,7 @@
         },
         {
           "video_id": "vbYPfW8hA7Y",
-          "title": "Noaptea 2 cu PISICA de pe Roblox..",
+          "title": "Am MURIT pentru PISICA asta..",
           "published": null,
           "duration": 1177,
           "url": "https://www.youtube.com/watch?v=vbYPfW8hA7Y"
@@ -320,13 +327,6 @@
           "published": null,
           "duration": 1217,
           "url": "https://www.youtube.com/watch?v=K9_M3AQJm5I"
-        },
-        {
-          "video_id": "E1k8AWTrYZo",
-          "title": "Mi-a facut MANCARE Cainele ???",
-          "published": null,
-          "duration": 1242,
-          "url": "https://www.youtube.com/watch?v=E1k8AWTrYZo"
         }
       ]
     },
