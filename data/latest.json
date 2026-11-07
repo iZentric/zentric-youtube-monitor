@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-11-06T13:52:42.927993+00:00",
+  "fetched_at": "2026-11-07T12:37:13.739838+00:00",
   "channels": [
     {
       "name": "Zentric Minecraft",
@@ -112,6 +112,13 @@
       "channel_url": "https://www.youtube.com/channel/UCGh69zTKqqo4vPIJOndt32w",
       "latest": [
         {
+          "video_id": "v61Hw1mo8dk",
+          "title": "The War in Cherno",
+          "published": null,
+          "duration": 6766,
+          "url": "https://www.youtube.com/watch?v=v61Hw1mo8dk"
+        },
+        {
           "video_id": "BHzdeo0DgiY",
           "title": "Geometry Dash..........................................",
           "published": null,
@@ -208,13 +215,6 @@
           "published": null,
           "duration": 5596,
           "url": "https://www.youtube.com/watch?v=Dwk1RFSBxa8"
-        },
-        {
-          "video_id": "_xV4H5MmrZ8",
-          "title": "Drawing Contest..",
-          "published": null,
-          "duration": 1760,
-          "url": "https://www.youtube.com/watch?v=_xV4H5MmrZ8"
         }
       ]
     },
@@ -224,15 +224,29 @@
       "channel_url": "https://www.youtube.com/channel/UC7Tmdxj18fdu4tTtxVUhoCA",
       "latest": [
         {
+          "video_id": "ThfWf6CcmgM",
+          "title": "Am mers INAPOI La CASA din SPATE..",
+          "published": null,
+          "duration": 1215,
+          "url": "https://www.youtube.com/watch?v=ThfWf6CcmgM"
+        },
+        {
+          "video_id": "8n2Kl6Ea560",
+          "title": "Mama STRICTA este UN PIC ciudata.. (UN PIC)",
+          "published": null,
+          "duration": 1493,
+          "url": "https://www.youtube.com/watch?v=8n2Kl6Ea560"
+        },
+        {
           "video_id": "hQlUXBAYaVo",
-          "title": "Cum sa SCAP din PARCUL din OHIO ?",
+          "title": "VINE dupa MINE un CLOWN cu NASU ROSU 😭",
           "published": null,
           "duration": 1467,
           "url": "https://www.youtube.com/watch?v=hQlUXBAYaVo"
         },
         {
           "video_id": "kWFmp5cT3_A",
-          "title": "Am GASIT cine FURA CARTOFII !",
+          "title": "Am DESCHIS BECIUL de La CARTOFI !",
           "published": null,
           "duration": 1386,
           "url": "https://www.youtube.com/watch?v=kWFmp5cT3_A"
@@ -260,7 +274,7 @@
         },
         {
           "video_id": "dUDtjBECfds",
-          "title": "Am cumparat CAT in the HAT in VIATA REALA !",
+          "title": "Am luat CAT in The Hat de pe TEMU !",
           "published": null,
           "duration": 1381,
           "url": "https://www.youtube.com/watch?v=dUDtjBECfds"
@@ -274,21 +288,21 @@
         },
         {
           "video_id": "6m0mga7Om6s",
-          "title": "A venit dupa MINE in CASA.. 💀",
+          "title": "A fost ASCUNS in CASA si a iesit SEARA..",
           "published": null,
           "duration": 3323,
           "url": "https://www.youtube.com/watch?v=6m0mga7Om6s"
         },
         {
           "video_id": "zt3ouFbIEjY",
-          "title": "L-am gasit pe JERRY pe Roblox !",
+          "title": "Cainele JERRY a venit pe Roblox !",
           "published": null,
           "duration": 1861,
           "url": "https://www.youtube.com/watch?v=zt3ouFbIEjY"
         },
         {
           "video_id": "vbYPfW8hA7Y",
-          "title": "Am MURIT pentru PISICA asta..",
+          "title": "Noaptea 2 cu PISICA de pe Roblox..",
           "published": null,
           "duration": 1177,
           "url": "https://www.youtube.com/watch?v=vbYPfW8hA7Y"
@@ -313,20 +327,6 @@
           "published": null,
           "duration": 1687,
           "url": "https://www.youtube.com/watch?v=4x3HIq2Kru0"
-        },
-        {
-          "video_id": "9c9AoDuRSAg",
-          "title": "A venit VAMPIR pe Animal HOSPITAL !",
-          "published": null,
-          "duration": 1349,
-          "url": "https://www.youtube.com/watch?v=9c9AoDuRSAg"
-        },
-        {
-          "video_id": "K9_M3AQJm5I",
-          "title": "TESTEZ 100 de LEGENDE pe Roblox",
-          "published": null,
-          "duration": 1217,
-          "url": "https://www.youtube.com/watch?v=K9_M3AQJm5I"
         }
       ]
     },
