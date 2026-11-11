@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-11-10T14:28:44.742327+00:00",
+  "fetched_at": "2026-11-11T13:43:13.877293+00:00",
   "channels": [
     {
       "name": "Zentric Minecraft",
@@ -112,6 +112,13 @@
       "channel_url": "https://www.youtube.com/channel/UCGh69zTKqqo4vPIJOndt32w",
       "latest": [
         {
+          "video_id": "WmP8B7po4sI",
+          "title": "I'm a TEACHER at SCHOOL",
+          "published": null,
+          "duration": 1347,
+          "url": "https://www.youtube.com/watch?v=WmP8B7po4sI"
+        },
+        {
           "video_id": "URUbWABvng4",
           "title": "Building a ROAD to the MOON..",
           "published": null,
@@ -208,13 +215,6 @@
           "published": null,
           "duration": 1393,
           "url": "https://www.youtube.com/watch?v=S2oo5HdsJ9A"
-        },
-        {
-          "video_id": "Zdr8U04ARb4",
-          "title": "don't watch this video because it might be the most cracked game in the world",
-          "published": null,
-          "duration": 1536,
-          "url": "https://www.youtube.com/watch?v=Zdr8U04ARb4"
         }
       ]
     },
@@ -225,21 +225,21 @@
       "latest": [
         {
           "video_id": "iB6N5kMUcqI",
-          "title": "DESCHIDEM CUFARUL LA ORA 18:00 !",
+          "title": "CE este in CUFARUL cu PAM PAM ?",
           "published": null,
-          "duration": null,
+          "duration": 891,
           "url": "https://www.youtube.com/watch?v=iB6N5kMUcqI"
         },
         {
           "video_id": "g6qdEX4bCRE",
-          "title": "Trebuie sa am GRIJA de 5 COPII MICI..",
+          "title": "AI GRIJA de SKY cel MIC..",
           "published": null,
           "duration": 1708,
           "url": "https://www.youtube.com/watch?v=g6qdEX4bCRE"
         },
         {
           "video_id": "c9f5DW3Vfx8",
-          "title": "L-am SALVAT pe HUGGY cel REAL !",
+          "title": "L-am SALVAT pe Cainele HUGGY !",
           "published": null,
           "duration": 1251,
           "url": "https://www.youtube.com/watch?v=c9f5DW3Vfx8"
@@ -253,21 +253,21 @@
         },
         {
           "video_id": "8n2Kl6Ea560",
-          "title": "Mama STRICTA este UN PIC ciudata.. (UN PIC)",
+          "title": "Asta NU este Mama MEA STRICTA !",
           "published": null,
           "duration": 1493,
           "url": "https://www.youtube.com/watch?v=8n2Kl6Ea560"
         },
         {
           "video_id": "hQlUXBAYaVo",
-          "title": "Am fost in PARCUL din OHIO !",
+          "title": "Cum sa SCAP din PARCUL din OHIO ?",
           "published": null,
           "duration": 1467,
           "url": "https://www.youtube.com/watch?v=hQlUXBAYaVo"
         },
         {
           "video_id": "kWFmp5cT3_A",
-          "title": "Am DESCHIS BECIUL de La CARTOFI !",
+          "title": "Secretul din BECIUL de CARTOFI..",
           "published": null,
           "duration": 1386,
           "url": "https://www.youtube.com/watch?v=kWFmp5cT3_A"
