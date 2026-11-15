@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-11-14T13:06:21.349061+00:00",
+  "fetched_at": "2026-11-15T13:35:55.293894+00:00",
   "channels": [
     {
       "name": "Zentric Minecraft",
@@ -112,6 +112,13 @@
       "channel_url": "https://www.youtube.com/channel/UCGh69zTKqqo4vPIJOndt32w",
       "latest": [
         {
+          "video_id": "O7ee6bKITbc",
+          "title": "What's inside the EGG?",
+          "published": null,
+          "duration": 5685,
+          "url": "https://www.youtube.com/watch?v=O7ee6bKITbc"
+        },
+        {
           "video_id": "w0t51pxyVIU",
           "title": "Who did this..",
           "published": null,
@@ -208,13 +215,6 @@
           "published": null,
           "duration": 1604,
           "url": "https://www.youtube.com/watch?v=ce3C3Ij8TiE"
-        },
-        {
-          "video_id": "vYSsnyRmF3Y",
-          "title": "The attack in Cherno..",
-          "published": null,
-          "duration": 6702,
-          "url": "https://www.youtube.com/watch?v=vYSsnyRmF3Y"
         }
       ]
     },
@@ -224,8 +224,15 @@
       "channel_url": "https://www.youtube.com/channel/UC7Tmdxj18fdu4tTtxVUhoCA",
       "latest": [
         {
+          "video_id": "qHoY2g_YYHA",
+          "title": "Vrei PAM PAM sau HOT DOG ?",
+          "published": null,
+          "duration": 1573,
+          "url": "https://www.youtube.com/watch?v=qHoY2g_YYHA"
+        },
+        {
           "video_id": "1JgiaGhaXQc",
-          "title": "Despre SECRETUL de la Casa din SPATE..",
+          "title": "L-am SALVAT pe Tatal STRICT de EMILIA !",
           "published": null,
           "duration": 1479,
           "url": "https://www.youtube.com/watch?v=1JgiaGhaXQc"
@@ -246,7 +253,7 @@
         },
         {
           "video_id": "5h7Zl5KrLl4",
-          "title": "Mai multe DESPRE Sucul PAM PAM !",
+          "title": "Am bagat Sucul PAM PAM pe Minecraft !",
           "published": null,
           "duration": 1059,
           "url": "https://www.youtube.com/watch?v=5h7Zl5KrLl4"
@@ -274,21 +281,21 @@
         },
         {
           "video_id": "ThfWf6CcmgM",
-          "title": "Am mers INAPOI La CASA din SPATE..",
+          "title": "CE am vazut LA EMILIA Acasa.. (Casa din SPATE)",
           "published": null,
           "duration": 1215,
           "url": "https://www.youtube.com/watch?v=ThfWf6CcmgM"
         },
         {
           "video_id": "8n2Kl6Ea560",
-          "title": "Mama STRICTA este UN PIC ciudata.. (UN PIC)",
+          "title": "Asta NU este Mama MEA STRICTA !",
           "published": null,
           "duration": 1493,
           "url": "https://www.youtube.com/watch?v=8n2Kl6Ea560"
         },
         {
           "video_id": "hQlUXBAYaVo",
-          "title": "Cum sa SCAP din PARCUL din OHIO ?",
+          "title": "Am fost in PARCUL din OHIO !",
           "published": null,
           "duration": 1467,
           "url": "https://www.youtube.com/watch?v=hQlUXBAYaVo"
@@ -320,13 +327,6 @@
           "published": null,
           "duration": 1238,
           "url": "https://www.youtube.com/watch?v=knqwpQRol-U"
-        },
-        {
-          "video_id": "dUDtjBECfds",
-          "title": "Am luat CAT in The Hat de pe TEMU !",
-          "published": null,
-          "duration": 1381,
-          "url": "https://www.youtube.com/watch?v=dUDtjBECfds"
         }
       ]
     },
