@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-11-17T15:38:42.071784+00:00",
+  "fetched_at": "2026-11-18T15:16:28.307483+00:00",
   "channels": [
     {
       "name": "Zentric Minecraft",
@@ -112,6 +112,13 @@
       "channel_url": "https://www.youtube.com/channel/UCGh69zTKqqo4vPIJOndt32w",
       "latest": [
         {
+          "video_id": "Tgez84mceRo",
+          "title": "Zburam un Avion..",
+          "published": null,
+          "duration": 1361,
+          "url": "https://www.youtube.com/watch?v=Tgez84mceRo"
+        },
+        {
           "video_id": "2IUojuAbX9s",
           "title": "I'm drawing for the Contest..",
           "published": null,
@@ -208,13 +215,6 @@
           "published": null,
           "duration": 1282,
           "url": "https://www.youtube.com/watch?v=PIxKaqrWwb4"
-        },
-        {
-          "video_id": "GJfMDEQgzGA",
-          "title": "7 Days with the Cat..",
-          "published": null,
-          "duration": 1595,
-          "url": "https://www.youtube.com/watch?v=GJfMDEQgzGA"
         }
       ]
     },
@@ -223,6 +223,13 @@
       "channel_id": "UC7Tmdxj18fdu4tTtxVUhoCA",
       "channel_url": "https://www.youtube.com/channel/UC7Tmdxj18fdu4tTtxVUhoCA",
       "latest": [
+        {
+          "video_id": "wdzm_qIn43k",
+          "title": "NU te duce in MALL La 3 DIMINEATA..",
+          "published": null,
+          "duration": 1520,
+          "url": "https://www.youtube.com/watch?v=wdzm_qIn43k"
+        },
         {
           "video_id": "5E-rGTAsQa8",
           "title": "Am gasit un LOC Secret cu PAM PAM ?",
@@ -239,14 +246,14 @@
         },
         {
           "video_id": "1JgiaGhaXQc",
-          "title": "Despre SECRETUL de la Casa din SPATE..",
+          "title": "Am SCAPAT de Casa din SPATE..",
           "published": null,
           "duration": 1479,
           "url": "https://www.youtube.com/watch?v=1JgiaGhaXQc"
         },
         {
           "video_id": "kR_rUVBZ9gw",
-          "title": "Cum SCAP de TSUNAMI cu MASINA ?",
+          "title": "FUGI de TSUNAMI cu MASINA MEA !",
           "published": null,
           "duration": 1331,
           "url": "https://www.youtube.com/watch?v=kR_rUVBZ9gw"
@@ -260,7 +267,7 @@
         },
         {
           "video_id": "5h7Zl5KrLl4",
-          "title": "Mai multe DESPRE Sucul PAM PAM !",
+          "title": "Am bagat Sucul PAM PAM pe Minecraft !",
           "published": null,
           "duration": 1059,
           "url": "https://www.youtube.com/watch?v=5h7Zl5KrLl4"
@@ -274,14 +281,14 @@
         },
         {
           "video_id": "g6qdEX4bCRE",
-          "title": "Trebuie sa am GRIJA de 5 COPII MICI..",
+          "title": "Am crezut ca este MAMA mea..",
           "published": null,
           "duration": 1708,
           "url": "https://www.youtube.com/watch?v=g6qdEX4bCRE"
         },
         {
           "video_id": "c9f5DW3Vfx8",
-          "title": "L-am SALVAT pe HUGGY cel REAL !",
+          "title": "L-am SALVAT pe Cainele HUGGY !",
           "published": null,
           "duration": 1251,
           "url": "https://www.youtube.com/watch?v=c9f5DW3Vfx8"
@@ -320,13 +327,6 @@
           "published": null,
           "duration": 1359,
           "url": "https://www.youtube.com/watch?v=Q0MD-c7BAwY"
-        },
-        {
-          "video_id": "HR-nHUZLHVw",
-          "title": "Totul este FATĂ pe Steal an EGG !",
-          "published": null,
-          "duration": 1169,
-          "url": "https://www.youtube.com/watch?v=HR-nHUZLHVw"
         }
       ]
     },
