@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-11-18T15:16:28.307483+00:00",
+  "fetched_at": "2026-11-19T15:23:05.739635+00:00",
   "channels": [
     {
       "name": "Zentric Minecraft",
@@ -57,7 +57,7 @@
         },
         {
           "video_id": "SCYPFmn-E8o",
-          "title": "I FOUND ALL THE GOLD IN SUPERCITY FOR THE MYSTERIO SKIN! ⛔️",
+          "title": "AM REUȘIT SĂ FAC COSTUMUL LUI MYSTERIO ÎN SUPERCITY! (S-A ÎNTÂMPLAT CEVA RĂU) 😱",
           "published": null,
           "duration": 1437,
           "url": "https://www.youtube.com/watch?v=SCYPFmn-E8o"
@@ -71,14 +71,14 @@
         },
         {
           "video_id": "kgSoNWKmLpc",
-          "title": "NO ONE CAN TOUCH ME ANYMORE WITH THIS SUIT II!",
+          "title": "NIMENI NU MA MAI POATE ATINGE CU ACEST COSTUM II!",
           "published": null,
           "duration": 1200,
           "url": "https://www.youtube.com/watch?v=kgSoNWKmLpc"
         },
         {
           "video_id": "oJMhaYI6I04",
-          "title": "WE PLAYED HIDE & SEEK ON SUPERCITY WITH NOCIVANU!",
+          "title": "HIDE & SEEK PE SUPERCITY: AM FOST GĂSIT ÎN ULTIMA SECUNDĂ!",
           "published": null,
           "duration": 886,
           "url": "https://www.youtube.com/watch?v=oJMhaYI6I04"
@@ -111,6 +111,13 @@
       "channel_id": "UCGh69zTKqqo4vPIJOndt32w",
       "channel_url": "https://www.youtube.com/channel/UCGh69zTKqqo4vPIJOndt32w",
       "latest": [
+        {
+          "video_id": "GeI2zwr1O6I",
+          "title": "An Adventure in GTA 6",
+          "published": null,
+          "duration": 1510,
+          "url": "https://www.youtube.com/watch?v=GeI2zwr1O6I"
+        },
         {
           "video_id": "Tgez84mceRo",
           "title": "Zburam un Avion..",
@@ -208,13 +215,6 @@
           "published": null,
           "duration": 2680,
           "url": "https://www.youtube.com/watch?v=d-F418lfHOs"
-        },
-        {
-          "video_id": "PIxKaqrWwb4",
-          "title": "The Tsunami is coming..",
-          "published": null,
-          "duration": 1282,
-          "url": "https://www.youtube.com/watch?v=PIxKaqrWwb4"
         }
       ]
     },
@@ -224,8 +224,15 @@
       "channel_url": "https://www.youtube.com/channel/UC7Tmdxj18fdu4tTtxVUhoCA",
       "latest": [
         {
+          "video_id": "JVUetFBzXak",
+          "title": "Cum a fost LANSAREA PAM PAM ?",
+          "published": null,
+          "duration": 2069,
+          "url": "https://www.youtube.com/watch?v=JVUetFBzXak"
+        },
+        {
           "video_id": "wdzm_qIn43k",
-          "title": "NU te duce in MALL La 3 DIMINEATA..",
+          "title": "NU te duce Noaptea in MALL..",
           "published": null,
           "duration": 1520,
           "url": "https://www.youtube.com/watch?v=wdzm_qIn43k"
@@ -260,7 +267,7 @@
         },
         {
           "video_id": "TCsv4VBipuI",
-          "title": "CE se intampla in JOC = este in VIATA REALA !",
+          "title": "Noaptea cu PISICA dar se INTAMPLA REAL !",
           "published": null,
           "duration": 1082,
           "url": "https://www.youtube.com/watch?v=TCsv4VBipuI"
@@ -288,7 +295,7 @@
         },
         {
           "video_id": "c9f5DW3Vfx8",
-          "title": "L-am SALVAT pe Cainele HUGGY !",
+          "title": "L-am SALVAT pe HUGGY cel REAL !",
           "published": null,
           "duration": 1251,
           "url": "https://www.youtube.com/watch?v=c9f5DW3Vfx8"
@@ -320,13 +327,6 @@
           "published": null,
           "duration": 1386,
           "url": "https://www.youtube.com/watch?v=kWFmp5cT3_A"
-        },
-        {
-          "video_id": "Q0MD-c7BAwY",
-          "title": "Mi-a FURAT PISICA in Noaptea 6..",
-          "published": null,
-          "duration": 1359,
-          "url": "https://www.youtube.com/watch?v=Q0MD-c7BAwY"
         }
       ]
     },
