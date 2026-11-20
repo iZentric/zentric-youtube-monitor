@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-11-19T15:23:05.739635+00:00",
+  "fetched_at": "2026-11-20T15:00:08.483837+00:00",
   "channels": [
     {
       "name": "Zentric Minecraft",
@@ -22,7 +22,7 @@
         },
         {
           "video_id": "3x0DheW5lcI",
-          "title": "POKECITY?! ?? Ep. 1 | THE NEW POKEMON SMP with NOCIVANU!",
+          "title": "POKECITY?! ?? Ep. 1 | NOUL SMP CU POKEMONI alaturi de NOCIVANU'!",
           "published": null,
           "duration": 2153,
           "url": "https://www.youtube.com/watch?v=3x0DheW5lcI"
@@ -43,7 +43,7 @@
         },
         {
           "video_id": "l8YWOqTS8Hg",
-          "title": "SUPER CITY but I am TOO FAST ! ⚡",
+          "title": "SUPER CITY dar sunt PREA RAPID ! ⚡",
           "published": null,
           "duration": 374,
           "url": "https://www.youtube.com/watch?v=l8YWOqTS8Hg"
@@ -111,6 +111,13 @@
       "channel_id": "UCGh69zTKqqo4vPIJOndt32w",
       "channel_url": "https://www.youtube.com/channel/UCGh69zTKqqo4vPIJOndt32w",
       "latest": [
+        {
+          "video_id": "kUTRO4dJJDI",
+          "title": "GTA6 is LEGENDARY",
+          "published": null,
+          "duration": 1533,
+          "url": "https://www.youtube.com/watch?v=kUTRO4dJJDI"
+        },
         {
           "video_id": "GeI2zwr1O6I",
           "title": "An Adventure in GTA 6",
@@ -208,13 +215,6 @@
           "published": null,
           "duration": 1219,
           "url": "https://www.youtube.com/watch?v=BHzdeo0DgiY"
-        },
-        {
-          "video_id": "d-F418lfHOs",
-          "title": "Cleaning the MOON of Dust..",
-          "published": null,
-          "duration": 2680,
-          "url": "https://www.youtube.com/watch?v=d-F418lfHOs"
         }
       ]
     },
@@ -224,15 +224,22 @@
       "channel_url": "https://www.youtube.com/channel/UC7Tmdxj18fdu4tTtxVUhoCA",
       "latest": [
         {
+          "video_id": "bOxVJiOzuDg",
+          "title": "Ziua 1 din GTA 6 !",
+          "published": null,
+          "duration": 1803,
+          "url": "https://www.youtube.com/watch?v=bOxVJiOzuDg"
+        },
+        {
           "video_id": "JVUetFBzXak",
-          "title": "Cum a fost LANSAREA PAM PAM ?",
+          "title": "Despre ZIUA cu Sucul PAM PAM !",
           "published": null,
           "duration": 2069,
           "url": "https://www.youtube.com/watch?v=JVUetFBzXak"
         },
         {
           "video_id": "wdzm_qIn43k",
-          "title": "NU te duce Noaptea in MALL..",
+          "title": "Am fost NOAPTEA in MALL si am Vazut ASTA..",
           "published": null,
           "duration": 1520,
           "url": "https://www.youtube.com/watch?v=wdzm_qIn43k"
@@ -253,7 +260,7 @@
         },
         {
           "video_id": "1JgiaGhaXQc",
-          "title": "Am SCAPAT de Casa din SPATE..",
+          "title": "L-am SALVAT pe Tatal STRICT de EMILIA !",
           "published": null,
           "duration": 1479,
           "url": "https://www.youtube.com/watch?v=1JgiaGhaXQc"
@@ -274,7 +281,7 @@
         },
         {
           "video_id": "5h7Zl5KrLl4",
-          "title": "Am bagat Sucul PAM PAM pe Minecraft !",
+          "title": "Mai multe DESPRE Sucul PAM PAM !",
           "published": null,
           "duration": 1059,
           "url": "https://www.youtube.com/watch?v=5h7Zl5KrLl4"
@@ -320,13 +327,6 @@
           "published": null,
           "duration": 1467,
           "url": "https://www.youtube.com/watch?v=hQlUXBAYaVo"
-        },
-        {
-          "video_id": "kWFmp5cT3_A",
-          "title": "Am GASIT cine FURA CARTOFII !",
-          "published": null,
-          "duration": 1386,
-          "url": "https://www.youtube.com/watch?v=kWFmp5cT3_A"
         }
       ]
     },
