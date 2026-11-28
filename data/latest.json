@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-11-27T16:17:52.080034+00:00",
+  "fetched_at": "2026-11-28T15:11:33.229674+00:00",
   "channels": [
     {
       "name": "Zentric Minecraft",
@@ -112,6 +112,13 @@
       "channel_url": "https://www.youtube.com/channel/UCGh69zTKqqo4vPIJOndt32w",
       "latest": [
         {
+          "video_id": "KcN_Vw88NII",
+          "title": "I Found an RPG in the Zombie Apocalypse..",
+          "published": null,
+          "duration": 4075,
+          "url": "https://www.youtube.com/watch?v=KcN_Vw88NII"
+        },
+        {
           "video_id": "9rw4Z5bqHYw",
           "title": "Mowing the Lawn 3...",
           "published": null,
@@ -208,13 +215,6 @@
           "published": null,
           "duration": 3742,
           "url": "https://www.youtube.com/watch?v=w0t51pxyVIU"
-        },
-        {
-          "video_id": "6h0D6m0rAJk",
-          "title": "gugu gaga",
-          "published": null,
-          "duration": 3537,
-          "url": "https://www.youtube.com/watch?v=6h0D6m0rAJk"
         }
       ]
     },
@@ -224,43 +224,50 @@
       "channel_url": "https://www.youtube.com/channel/UC7Tmdxj18fdu4tTtxVUhoCA",
       "latest": [
         {
+          "video_id": "SytoI4lxfZ0",
+          "title": "Toata Lumea HAI LA AQUA PARK !",
+          "published": null,
+          "duration": 1285,
+          "url": "https://www.youtube.com/watch?v=SytoI4lxfZ0"
+        },
+        {
           "video_id": "HGAaSrpZCTk",
-          "title": "Jocul cu IEPURELE Nu este REAL.",
+          "title": "NU Juca Jocul cu IEPURE pe Roblox..",
           "published": null,
           "duration": 1732,
           "url": "https://www.youtube.com/watch?v=HGAaSrpZCTk"
         },
         {
           "video_id": "AYj9FYEoa3Y",
-          "title": "Ce ZIC Abonatii despre Sucul PAM PAM ?",
+          "title": "CE au zis COPII despre PAM PAM ?",
           "published": null,
           "duration": 1136,
           "url": "https://www.youtube.com/watch?v=AYj9FYEoa3Y"
         },
         {
           "video_id": "CI6Iendt0BM",
-          "title": "CE zice Capra din OHIO despre PAM PAM ?",
+          "title": "Capra din OHIO a gustat PAM PAM !",
           "published": null,
           "duration": 1149,
           "url": "https://www.youtube.com/watch?v=CI6Iendt0BM"
         },
         {
           "video_id": "xvn1NlczKxA",
-          "title": "SCRIE CEVA si se INTAMPLA !",
+          "title": "ORICE am SCRIS, se INTAMPLA pe Roblox !",
           "published": null,
           "duration": 1167,
           "url": "https://www.youtube.com/watch?v=xvn1NlczKxA"
         },
         {
           "video_id": "9CyxeYzD4T0",
-          "title": "Cum este VIATA de FATA in GTA 6 ?",
+          "title": "Sunt FATA in GTA 6 😂",
           "published": null,
           "duration": 1024,
           "url": "https://www.youtube.com/watch?v=9CyxeYzD4T0"
         },
         {
           "video_id": "cdfAedE9A-I",
-          "title": "Am facut HOT DOG cu PAM PAM !",
+          "title": "A venit dupa HotDog cu PAM PAM in EL 😂",
           "published": null,
           "duration": 1454,
           "url": "https://www.youtube.com/watch?v=cdfAedE9A-I"
@@ -281,14 +288,14 @@
         },
         {
           "video_id": "bOxVJiOzuDg",
-          "title": "Fac PROSTII in Noul JOC GTA 6 !",
+          "title": "Ziua 1 din GTA 6 !",
           "published": null,
           "duration": 1803,
           "url": "https://www.youtube.com/watch?v=bOxVJiOzuDg"
         },
         {
           "video_id": "JVUetFBzXak",
-          "title": "Despre ZIUA cu Sucul PAM PAM !",
+          "title": "Cum a fost LANSAREA PAM PAM ?",
           "published": null,
           "duration": 2069,
           "url": "https://www.youtube.com/watch?v=JVUetFBzXak"
@@ -320,13 +327,6 @@
           "published": null,
           "duration": 1479,
           "url": "https://www.youtube.com/watch?v=1JgiaGhaXQc"
-        },
-        {
-          "video_id": "kR_rUVBZ9gw",
-          "title": "Cum SCAP de TSUNAMI cu MASINA ?",
-          "published": null,
-          "duration": 1331,
-          "url": "https://www.youtube.com/watch?v=kR_rUVBZ9gw"
         }
       ]
     },
